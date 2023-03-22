@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "581382639042",
+    "project_id": "notemaps-5b65e",
+    "storage_bucket": "notemaps-5b65e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581382639042:android:b1e03761944bcf422f5a5b",
+        "android_client_info": {
+          "package_name": "com.dani.final2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "581382639042-vfusg68qegki34mca2s28mv8t0ugoq76.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfnDL94wRE_ONXGRShBRQWvNff92S5s0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "581382639042-vfusg68qegki34mca2s28mv8t0ugoq76.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
