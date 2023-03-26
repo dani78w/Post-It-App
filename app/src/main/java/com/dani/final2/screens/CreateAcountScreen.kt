@@ -1,21 +1,26 @@
 package com.dani.final2.screens
 
-
-
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -27,34 +32,21 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.dani.final2.R
-
 import com.dani.final2.appData.userName
 import com.dani.final2.createAcount
-import com.dani.final2.navigation.AppNavigation
-import com.dani.final2.navigation.AppScreens
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavHostController) {
-
-
+fun CreateAcountScreen(navController: NavHostController) {
     Box(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(Color.Transparent)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         Image(
             painter = painterResource(id = R.drawable.fondo7),
@@ -71,27 +63,32 @@ fun LoginScreen(navController: NavHostController) {
 
 
         )
-        LoginPanel(navController)
+        CreateAcount(navController)
     }
 
 }
 
+
+
 @Composable
-fun LoginPanel(navController: NavHostController) {
+fun CreateAcount(navController: NavHostController) {
 
-    var passwordInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+
+    var paisInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
     }
-    var userInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+    var nombreInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue())
+    }
+    var edadInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
     }
 
-    Surface(
+    Box(
         modifier = Modifier
             .background(Color.Transparent)
             .zIndex(2f)
             .fillMaxSize()
-
 
     ) {
         Column(
@@ -99,18 +96,25 @@ fun LoginPanel(navController: NavHostController) {
                 .fillMaxSize()
                 .background(Color.Transparent)
                 .padding(20.dp)
+                .animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        delayMillis = 100
+                    )
+                )
         ) {
-            Box(modifier = Modifier.height(350.dp)) {
+            Box(modifier = Modifier.height(250.dp)) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxSize()
+                        .background(Color.Transparent)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.mapafondotranslucido),
                         contentDescription = "Logo",
                         modifier = Modifier
-                            .padding(top = 100.dp),
+                            .padding(top = 30.dp),
                         colorFilter = ColorFilter.tint(
                             MaterialTheme.colorScheme.primary,
                             BlendMode.SrcIn
@@ -121,15 +125,15 @@ fun LoginPanel(navController: NavHostController) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .height(330.dp)
-                        .width(350.dp)
-                        .padding(bottom = 105.dp)
+                        .height(190.dp)
+                        .width(250.dp)
+                        .padding(bottom = 45.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.locked),
+                        painter = painterResource(id = R.drawable.user),
                         contentDescription = "Logo",
                         modifier = Modifier
-                            .padding(top = 100.dp)
+                            .padding(top = 40.dp)
                             .width(1030.dp),
                         colorFilter = ColorFilter.tint(
                             MaterialTheme.colorScheme.primary,
@@ -146,12 +150,18 @@ fun LoginPanel(navController: NavHostController) {
                     .fillMaxWidth()
                     .weight(0.4f)
                     .padding(horizontal = 10.dp)
+                    .scrollable(
+                        state = rememberScrollState(),
+                        orientation = Orientation.Vertical,
+                        true
+                    )
                     .animateContentSize(
                         animationSpec = tween(500)
+
                     ),
             ) {
                 Text(
-                    text = "Inicia sesión", textAlign = TextAlign.Center, modifier = Modifier
+                    text = "Crea tu cuenta", textAlign = TextAlign.Center, modifier = Modifier
                         .padding(horizontal = 12.dp)
                         .animateContentSize(
                             animationSpec = tween(500)
@@ -168,12 +178,12 @@ fun LoginPanel(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(5.dp))
 
                 OutlinedTextField(
-                    value = userInput,
-                    onValueChange = { userInput = it },
-                    label = { Text("User") },
+                    value = nombreInput,
+                    onValueChange = { nombreInput = it },
+                    label = { Text("Nombre") },
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Filled.AccountCircle,
+                            imageVector = Icons.Filled.Person,
                             contentDescription = "siguiente"
                         )
                     },
@@ -205,13 +215,13 @@ fun LoginPanel(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(5.dp))
 
                 OutlinedTextField(
-                    value = passwordInput,
-                    onValueChange = { passwordInput = it },
-                    label = { Text("Password") },
+                    value = paisInput,
+                    onValueChange = { paisInput = it },
+                    label = { Text("País") },
                     maxLines = 1,
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Filled.Security,
+                            imageVector = Icons.Filled.Flag,
                             contentDescription = "siguiente"
                         )
                     },
@@ -226,7 +236,7 @@ fun LoginPanel(navController: NavHostController) {
 
                         .fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
-                    visualTransformation = PasswordVisualTransformation(),
+
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
@@ -242,6 +252,44 @@ fun LoginPanel(navController: NavHostController) {
                     )
                 )
                 Spacer(modifier = Modifier.height(5.dp))
+                OutlinedTextField(
+                    value = edadInput,
+                    onValueChange = { edadInput = it },
+                    label = { Text("Edad") },
+                    maxLines = 1,
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Cake,
+                            contentDescription = "siguiente"
+                        )
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .height(67.dp)
+                        .padding(horizontal = 10.dp)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant,
+                            MaterialTheme.shapes.medium
+                        )
+
+                        .fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    textStyle = TextStyle.Default.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp,
+                        textDecoration = null,
+                        letterSpacing = 11.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(5.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -251,92 +299,15 @@ fun LoginPanel(navController: NavHostController) {
 
                 ) {
                     Spacer(modifier = Modifier.width(10.dp))
-                    Row(
+                    LinearProgressIndicator(
                         modifier = Modifier
+                            .weight(0.1f)
+                            .height(47.dp)
                             .align(Alignment.CenterVertically)
-                            .clickable(onClick = { /*TODO*/ })
-                            .weight(0.5f)
-                            .fillMaxHeight()
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.shapes.medium
-                            )
-                    ) {
-                        Spacer(modifier = Modifier.weight(0.1f))
-                        Image(
-                            painter = painterResource(id = R.drawable.google),
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .align(Alignment.CenterVertically)
-                                .height(20.dp)
-                                .aspectRatio(1f),
-                            colorFilter = ColorFilter.tint(
-                                MaterialTheme.colorScheme.surfaceTint,
-                                BlendMode.SrcIn
-                            ),
-                        )
-                        Text(
-                            text = "Google",
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier
-                                .weight(0.8f)
-                                .align(Alignment.CenterVertically)
-                                .padding(start = 10.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            style = TextStyle.Default.copy(
-                                fontWeight = FontWeight.W800,
-                                fontSize = 24.sp,
-                                textDecoration = null,
-                                baselineShift = BaselineShift.None
-                            )
-                        )
-
-                    }
-                    Spacer(modifier = Modifier.width(5.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .clickable(onClick = { /*TODO*/ })
-                            .align(Alignment.CenterVertically)
-                            .weight(0.5f)
-                            .fillMaxHeight()
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.shapes.medium
-                            )
-                    ) {
-                        Spacer(modifier = Modifier.weight(0.1f))
-                        Image(
-                            painter = painterResource(id = R.drawable.facebook),
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .align(Alignment.CenterVertically)
-                                .height(20.dp)
-                                .aspectRatio(1f),
-                            colorFilter = ColorFilter.tint(
-                                MaterialTheme.colorScheme.surfaceTint,
-                                BlendMode.SrcIn
-                            ),
-                        )
-                        Text(
-                            text = "Facebook",
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier
-                                .weight(0.8f)
-                                .align(Alignment.CenterVertically)
-                                .padding(start = 10.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            style = TextStyle.Default.copy(
-                                fontWeight = FontWeight.W800,
-                                fontSize = 24.sp,
-                                textDecoration = null,
-                                baselineShift = BaselineShift.None
-                            )
-                        )
-
-                    }
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ,
+                    )
                     Spacer(modifier = Modifier.width(10.dp))
 
                 }
@@ -352,10 +323,8 @@ fun LoginPanel(navController: NavHostController) {
             Button(
                 onClick = {
 
-                    userName.value = userInput.text
-                    var stateCreate = createAcount(navController,userInput.text,passwordInput.text)
-
-
+                    userName.value = nombreInput.text
+                    navController.navigate("Listas")
 
 
 
@@ -381,29 +350,4 @@ fun LoginPanel(navController: NavHostController) {
 
         }
     }
-
-
-}
-
-
-@Preview
-@Composable
-fun LoginScreenPreview() {
-    AppScreens.LoginScreen
-}
-
-private fun signIn(email: String, password: String) {
-    var auth= FirebaseAuth.getInstance()
-    auth.signInWithEmailAndPassword(email, password)
-}
-private fun createAccount(email: String, password: String) {
-    var auth= FirebaseAuth.getInstance()
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener() { task ->
-            if (task.isSuccessful) {
-                print("Cuenta creada")
-            } else {
-                print("Error al crear la cuenta")
-            }
-        }
 }

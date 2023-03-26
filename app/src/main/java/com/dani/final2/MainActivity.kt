@@ -4,11 +4,15 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.dani.final2.appData.textList
 import com.dani.final2.navigation.AppNavigation
 
 
 import com.dani.final2.screens.LoginScreen
 import com.dani.final2.ui.theme.Final2Theme
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class MainActivity : ComponentActivity() {
 
@@ -22,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 // Set up the account object with the Auth0 application details
 
 
-
+                textList.clear()
                 hideSystemUI()
                 AppNavigation()
 
@@ -30,8 +34,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-
 
     private fun hideSystemUI() {
         // Enables regular immersive mode.
