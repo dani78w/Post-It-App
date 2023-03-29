@@ -1,5 +1,6 @@
 package com.dani.final2.appData
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ktx.firestore
@@ -10,24 +11,33 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.lang.Thread.sleep
 
-class NoteGetter(): ViewModel() {
+class NoteGetter() : ViewModel() {
 
-
-    fun getNotes() {
+    fun location() {
         val db = Firebase.firestore
         viewModelScope.launch(Dispatchers.IO) {
-            sleep(500)
-            for (i in db.collection("notes").get().await().documents) {
-                if (textList.contains(i.get("note").toString())) {
-                    continue
-                }else{
-
-                    textList.add(i.get("note").toString())
-                }
-            }
-
+            db.collection("Location").add("location" to lc.value)
         }
     }
+
+    fun getNotes() {
+
+        val db = Firebase.firestore
+        viewModelScope.launch(Dispatchers.IO) {
+
+            for (i in db.collection("notes").get().await().documents) {
+                if ((textList.contains(i.get("note").toString()))) {
+                    continue
+                } else {
+                    textList.add(i.get("note").toString())
+                    noteList.add(Nota(i.get("note").toString(),i.get("ubi").toString()))
+                }
+
+
+            }
+        }
+    }
+
     fun deleteNotes() {
         val db = Firebase.firestore
         textList.clear()
@@ -37,6 +47,7 @@ class NoteGetter(): ViewModel() {
             }
         }
     }
+
     fun deleteNote(note: String) {
         val db = Firebase.firestore
         textList.clear()
@@ -53,4 +64,30 @@ class NoteGetter(): ViewModel() {
             }
         }
     }
+
+    fun purgeDuplicates() {
+        var auxList = mutableListOf<Nota>()
+        var flag = false
+        for (i in noteList) {
+
+            if (auxList.isEmpty()) {
+                auxList.add(i)
+            } else {
+
+                for (j in auxList) {
+                    if (i.text == j.text) {
+                        flag = true
+                    }
+                }
+            }
+
+            if(flag==false){
+                auxList.add(i)
+            }
+
+        }
+        noteList.clear()
+        noteList.addAll(auxList)
+    }
+
 }

@@ -5,5 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 
 var textList = mutableStateListOf<String>()
+var noteList = mutableStateListOf<Nota>()
 val userName = mutableStateOf("")
 val userPass = mutableStateOf(false)
+var lc = mutableStateOf("")
