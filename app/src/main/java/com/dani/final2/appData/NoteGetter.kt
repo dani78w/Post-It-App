@@ -70,9 +70,9 @@ class NoteGetter() : ViewModel() {
         sleep(25)
     }
 
-    fun waitt() {
+    fun waitToSincronize() {
         viewModelScope.launch(Dispatchers.IO) {
-            sleep(2550)
+            sleep(70)
         }
     }
     fun deleteNotes() {
@@ -168,7 +168,7 @@ class NoteGetter() : ViewModel() {
         var j = 0
 
         for (i in noteList.distinct()) {
-            waitt()
+            waitToSincronize()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
