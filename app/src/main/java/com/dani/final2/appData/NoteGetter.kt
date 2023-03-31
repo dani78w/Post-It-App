@@ -51,7 +51,7 @@ class NoteGetter() : ViewModel() {
     }
 
     fun getNotes() {
-
+        sleep(25)
         val db = Firebase.firestore
         viewModelScope.launch(Dispatchers.IO) {
 
@@ -65,10 +65,16 @@ class NoteGetter() : ViewModel() {
 
 
             }
+
         }
-        sleep(100)
+        sleep(25)
     }
 
+    fun waitt() {
+        viewModelScope.launch(Dispatchers.IO) {
+            sleep(2550)
+        }
+    }
     fun deleteNotes() {
         val db = Firebase.firestore
         textList.clear()
@@ -123,6 +129,7 @@ class NoteGetter() : ViewModel() {
 
     @Composable
     fun showNotes(scope: CoroutineScope, snackbarHostState: SnackbarHostState) {
+
         if (!(noteList.isEmpty())) {
             Column(
                 modifier = Modifier
@@ -161,6 +168,7 @@ class NoteGetter() : ViewModel() {
         var j = 0
 
         for (i in noteList.distinct()) {
+            waitt()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
