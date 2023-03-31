@@ -2,6 +2,12 @@ package com.dani.final2.screens
 
 
 
+import android.app.Instrumentation
+import android.content.Intent
+import android.view.View
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -31,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.navigation.NavHostController
 import com.dani.final2.R
 
@@ -38,11 +45,18 @@ import com.dani.final2.appData.userName
 import com.dani.final2.createAcount
 import com.dani.final2.navigation.AppNavigation
 import com.dani.final2.navigation.AppScreens
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.GoogleApiActivity
+import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -253,8 +267,11 @@ fun LoginPanel(navController: NavHostController) {
                     Spacer(modifier = Modifier.width(10.dp))
                     Row(
                         modifier = Modifier
+
                             .align(Alignment.CenterVertically)
-                            .clickable(onClick = { /*TODO*/ })
+                            .clickable(onClick = {
+                                GoogleApiActivity().intent
+                            })
                             .weight(0.5f)
                             .fillMaxHeight()
                             .background(
@@ -361,6 +378,7 @@ fun LoginPanel(navController: NavHostController) {
 
 
 
+
                 }, modifier = Modifier
                     .height(67.dp)
                     .aspectRatio(1f)
@@ -406,4 +424,5 @@ private fun createAccount(email: String, password: String) {
                 print("Error al crear la cuenta")
             }
         }
+
 }

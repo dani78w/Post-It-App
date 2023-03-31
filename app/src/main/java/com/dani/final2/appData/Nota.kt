@@ -8,14 +8,18 @@ import com.google.type.DateTime
 import java.sql.Time
 
 class Nota {
+    var id :String = ""
     var text :String = ""
     var ubi :String = "No existe"
-    lateinit var time :Date.Builder
-    constructor(text: String) {
-        this.text = text
-    }
+
 
     constructor(text: String, ubi: String) {
+        this.text = text
+        this.ubi = ubi
+    }
+
+    constructor(id: String, text: String, ubi: String) {
+        this.id = id
         this.text = text
         this.ubi = ubi
     }

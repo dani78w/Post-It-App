@@ -18,13 +18,19 @@ import com.dani.final2.navigation.AppNavigation
 
 import com.dani.final2.screens.LoginScreen
 import com.dani.final2.ui.theme.Final2Theme
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.lang.Long
 
 class MainActivity : ComponentActivity() {
+    private lateinit var oneTapClient: SignInClient
+    private lateinit var signInRequest: BeginSignInRequest
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +58,7 @@ class MainActivity : ComponentActivity() {
                             nt.location()
                         }
                     }
-
+                
                 textList.clear()
                 hideSystemUI()
                 AppNavigation()

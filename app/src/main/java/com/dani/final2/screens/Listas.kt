@@ -15,6 +15,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -42,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.dani.final2.R
@@ -49,6 +51,7 @@ import com.dani.final2.appData.*
 import com.dani.final2.createAcount
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -171,8 +174,9 @@ fun Listas(navController: NavHostController) {
                             border = BorderStroke(0.dp, Color.Transparent),
                             shape = MaterialTheme.shapes.large,
                             onClick = {
+
                                 val note = hashMapOf(
-                                    "email" to "user",
+                                    "email" to userName.value,
                                     "note" to textInput.text,
                                     "ubi" to lc.value
                                 )
@@ -340,7 +344,12 @@ fun Listas(navController: NavHostController) {
                 modifier = Modifier
                     .fillMaxSize()
 
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(
+                        state = rememberScrollState(),
+                        enabled = true,
+                        flingBehavior = ScrollableDefaults.flingBehavior(),
+                    )
+
                     .wrapContentHeight()
                     .background(MaterialTheme.colorScheme.surface)
                     .animateContentSize(
@@ -385,120 +394,11 @@ fun Listas(navController: NavHostController) {
                 Divider(
                     thickness = 1.dp,
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.padding(horizontal=15.dp,vertical=3.dp)
+                    modifier = Modifier.padding(horizontal=175.dp,vertical=22.dp)
                 )
 
                 //Si panel de notas detectado ocultar todo
-                for (i in noteList.distinct()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp)
-                            .wrapContentHeight()
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.shapes.medium
-                            )
-                            .animateContentSize(
-                                animationSpec = tween(500)
-                            ),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if(!i.equals("N")) {
-                            Row(
-                                modifier = Modifier
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "NOTA",
-                                    modifier = Modifier
-                                        .padding(start = 9.dp)
-                                        .align(Alignment.CenterVertically)
-                                        .weight(0.4f),
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.inverseSurface
-                                )
-                                Icon(imageVector = Icons.Default.AddLocation,
-                                    contentDescription = "",
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .clickable {
-
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    withDismissAction = true,
-                                                    message = "Aún no está implementado"
-                                                )
-                                            }
-                                        }
-                                        .align(Alignment.CenterVertically),
-                                    tint = MaterialTheme.colorScheme.inverseSurface
-                                )
-                                Icon(imageVector = Icons.Default.Delete,
-                                    contentDescription = "",
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .clickable {
-                                            noteList.remove(i)
-                                        }
-                                        .align(Alignment.CenterVertically),
-                                    tint = MaterialTheme.colorScheme.inverseSurface
-                                )
-                            }
-                        }
-                        Box(
-                            modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-
-                        ) {
-                            Spacer(modifier = Modifier.height(200.dp))
-                            Column() {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(text = i.text, modifier = Modifier.padding(10.dp), fontSize = 20.sp)
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp)
-                                        .height(110.dp)
-                                        .clip(MaterialTheme.shapes.medium)
-                                        .background(
-                                            MaterialTheme.colorScheme.surface,
-                                            MaterialTheme.shapes.medium
-                                        )
-                                        .animateContentSize(
-                                            animationSpec = tween(500)
-                                        ),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.ViewInAr,
-                                        contentDescription = "da",
-                                        modifier = Modifier
-                                            .padding(10.dp)
-                                            .weight(0.2f)
-                                            .size(35.dp)
-                                    )
-                                    Text(
-                                        text = i.ubi.toString(),
-                                        modifier = Modifier
-                                            .weight(0.6f)
-                                            .padding(10.dp)
-                                    )
-                                }
-                            }
-
-                        }
-                    }
-
-                }
-                Spacer(modifier = Modifier.height(240.dp))
-
+                ng.showNotes(scope,snackbarHostState )
                 /*Generador de notas puras sin gps
                 for (i in textList.distinct()) {
                     Column(
@@ -585,6 +485,9 @@ fun Listas(navController: NavHostController) {
 
 
 }
+
+
+
 
 
 
