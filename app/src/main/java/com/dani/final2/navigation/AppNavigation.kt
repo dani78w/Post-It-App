@@ -17,8 +17,14 @@ fun AppNavigation() {
         composable(AppScreens.LoginScreen.route) {
             LoginScreen(navController)
         }
+        composable(AppScreens.HomeScreen.route) {
+            HomeScren(navController)
+        }
         composable(AppScreens.CreateAcountScreen.route) {
             CreateAcountScreen(navController)
+        }
+        composable(AppScreens.SessionMScreen.route) {
+            SessionMScreen(navController)
         }
         composable(AppScreens.ListasScreen.route) {
             ListasScreen(navController)

@@ -1,6 +1,7 @@
 package com.dani.final2.screens
 
 import android.annotation.SuppressLint
+
 import android.location.GpsSatellite
 import android.location.Location
 import android.telephony.CarrierConfigManager.Gps
@@ -16,6 +17,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -35,6 +37,8 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -51,11 +56,14 @@ import com.dani.final2.appData.*
 import com.dani.final2.createAcount
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
+import android.content.ClipData
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 
 
 @Composable
@@ -88,7 +96,8 @@ fun ListasScreen(navController: NavHostController) {
 
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ServiceCast")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 
@@ -96,28 +105,31 @@ fun Listas(navController: NavHostController) {
     var headerState by rememberSaveable() {
         mutableStateOf(250)
     }
-
     var ng = NoteGetter()
+    var contexto = LocalContext.current
+        val db = Firebase.firestore
+        db.collection("notes").addSnapshotListener() { value, error ->
+            if (error != null) {
+                return@addSnapshotListener
+            }
 
-    val db = Firebase.firestore
-    db.collection("notes").addSnapshotListener() { value, error ->
-        if (error != null) {
-            return@addSnapshotListener
+            noteList.clear()
+            textList.clear()
+            ng.getNotes()
+            ng.purgeDuplicates()
+
         }
 
-        noteList.clear()
-        textList.clear()
-        ng.getNotes()
-        ng.purgeDuplicates()
 
-    }
 
     var textInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
     }
 
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
     Scaffold(modifier = Modifier.zIndex(1f),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
@@ -136,7 +148,7 @@ fun Listas(navController: NavHostController) {
                     OutlinedTextField(
                         value = textInput,
                         onValueChange = { textInput = it },
-                        label = { Text("Nota") },
+                        label = { Text(" Crear una nota") },
                         maxLines = 1,
                         leadingIcon = {
                             Icon(
@@ -147,7 +159,7 @@ fun Listas(navController: NavHostController) {
                         modifier = Modifier
                             .weight(0.5f)
                             .wrapContentHeight()
-                            .padding(horizontal = 5.dp)
+                            .padding(start= 5.dp)
                             .background(
                                 MaterialTheme.colorScheme.surface,
                                 MaterialTheme.shapes.medium
@@ -178,7 +190,10 @@ fun Listas(navController: NavHostController) {
                                 val note = hashMapOf(
                                     "email" to userName.value,
                                     "note" to textInput.text,
-                                    "ubi" to lc.value
+                                    "ubi" to lc.value,
+                                    "z" to lcd[0],
+                                    "x" to lcd[1],
+                                    "y" to lcd[2]
                                 )
                                 val db = Firebase.firestore
 
@@ -221,10 +236,11 @@ fun Listas(navController: NavHostController) {
                     Spacer(modifier = Modifier.width(5.dp))
                 }
 
-                var selectedItem by remember { mutableStateOf(0) }
-                val items = listOf("Notas", "Mapa", "Cámara")
-                val itemsIcon = listOf(Icons.Filled.Notes, Icons.Filled.Map, Icons.Filled.Camera)
-                NavigationBar(modifier = Modifier.height(73.dp)) {
+                var selectedItem by remember { mutableStateOf(1) }
+                val items = listOf("Inicio","Notas", "Mapa", "Cámara","Ajustes")
+                val itemsIcon =
+                    listOf(Icons.Filled.Home,Icons.Filled.Notes, Icons.Filled.Map, Icons.Filled.Camera,Icons.Filled.Settings)
+                NavigationBar(modifier = Modifier.height(83.dp)) {
                     items.forEachIndexed { index, item ->
                         NavigationBarItem(
                             icon = { Icon(itemsIcon[index], contentDescription = item) },
@@ -233,13 +249,23 @@ fun Listas(navController: NavHostController) {
                             onClick = {
                                 selectedItem = index
                                 when (index) {
+                                    0 -> {
+                                        navController.navigate("homeScreen")
+                                    }
                                     1 -> {
-                                        navController.navigate("mapasScreen")
+                                        navController.navigate("listas")
                                     }
                                     2 -> {
                                         navController.navigate("mapasScreen")
                                     }
+                                    3 -> {
+                                        selectedItem = 3
+                                    }
+                                    4 -> {
+                                        selectedItem = 4
+                                    }
                                 }
+
                             }
                         )
                     }
@@ -247,31 +273,6 @@ fun Listas(navController: NavHostController) {
             }
         },
 
-        floatingActionButton = {
-            if (headerState != 0) {
-            } else {
-                FloatingActionButton(modifier = Modifier
-                    .padding(5.dp)
-                    .size(57.dp)
-
-                    .background(Color.Transparent, MaterialTheme.shapes.large),
-                    onClick = {
-                        var ng = NoteGetter()
-                        ng.deleteNotes()
-                        textList.clear()
-                        headerState = 250
-                    }) {
-                    Icon(
-                        imageVector = Icons.Sharp.Delete,
-                        contentDescription = "siguiente",
-                        modifier = Modifier.size(43.dp)
-                    )
-                }
-
-
-            }
-
-        }
 
     ) {
         // Screen content
@@ -280,6 +281,7 @@ fun Listas(navController: NavHostController) {
         Surface() {
             if (noteList.isNotEmpty()) {
                 headerState = 0
+
             } else {
                 headerState = 250
             }
@@ -319,6 +321,7 @@ fun Listas(navController: NavHostController) {
                         .height(190.dp)
                         .width(250.dp)
                         .padding(bottom = 45.dp)
+
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.lapiz),
@@ -339,7 +342,10 @@ fun Listas(navController: NavHostController) {
 
         }
         Column(
+            modifier=Modifier.padding(top=headerState.dp)
         ) {
+
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -358,6 +364,7 @@ fun Listas(navController: NavHostController) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
 
                 Row(
                     modifier = Modifier
@@ -389,7 +396,105 @@ fun Listas(navController: NavHostController) {
                             .padding(10.dp)
                     )
                 }
+                if(headerState==0){
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .clip(MaterialTheme.shapes.medium)
 
+                        .animateContentSize(
+                            animationSpec = tween(500)
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    var colapseButtonText by remember { mutableStateOf("Expand") }
+                    var colapseButtonIcon by remember { mutableStateOf(Icons.Outlined.Expand) }
+                    Row(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .padding(10.dp, 5.dp, 5.dp, 10.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                MaterialTheme.shapes.medium
+                            )
+                            .clickable(true) {
+                                if (listState.value) {
+                                    listState.value = false
+                                    colapseButtonText = "Colapse"
+                                    colapseButtonIcon = Icons.Outlined.Compress
+                                } else {
+                                    listState.value = true
+                                    colapseButtonText = "Expand"
+                                    colapseButtonIcon = Icons.Outlined.Expand
+                                }
+                                val clipboardManager = contexto.getSystemService(ClipboardManager::class.java)
+                                clipboardManager?.setText(AnnotatedString("EEEpA"))
+
+                            }
+                    ){
+
+
+                        Text(
+                            text = colapseButtonText,
+                            modifier = Modifier
+                                .weight(0.6f)
+                                .padding(10.dp)
+                                .align(Alignment.CenterVertically)
+
+                        )
+                        Icon(
+                            imageVector = colapseButtonIcon,
+                            contentDescription = "da",
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .weight(0.4f)
+                                .size(25.dp)
+                        )
+
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .padding(5.dp, 5.dp, 10.dp, 10.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                MaterialTheme.shapes.medium
+
+                            )
+                            .clickable {
+                                var ng = NoteGetter()
+                                ng.deleteNotes()
+                                textList.clear()
+                                headerState = 250
+                            }
+                    ){
+                        Text(
+                            text = "Borrar todo",
+                            modifier = Modifier
+                                .weight(0.7f)
+                                .padding(10.dp)
+                                .align(Alignment.CenterVertically)
+                        )
+                        Icon(
+                            imageVector =  Icons.Sharp.Delete,
+                            contentDescription = "da",
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .weight(0.3f)
+                                .size(25.dp)
+
+                        )
+
+                    }
+
+
+
+                }
+                }
 
                 Divider(
                     thickness = 1.dp,
@@ -398,7 +503,10 @@ fun Listas(navController: NavHostController) {
                 )
 
                 //Si panel de notas detectado ocultar todo
-                ng.showNotes(scope,snackbarHostState )
+
+
+                 ng.showNotes(scope, snackbarHostState)
+
                 /*Generador de notas puras sin gps
                 for (i in textList.distinct()) {
                     Column(
@@ -485,6 +593,7 @@ fun Listas(navController: NavHostController) {
 
 
 }
+
 
 
 

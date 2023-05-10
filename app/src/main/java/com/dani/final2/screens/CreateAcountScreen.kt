@@ -70,6 +70,7 @@ fun CreateAcountScreen(navController: NavHostController) {
 
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAcount(navController: NavHostController) {
 
@@ -324,7 +325,7 @@ fun CreateAcount(navController: NavHostController) {
                 onClick = {
 
                     userName.value = nombreInput.text
-                    navController.navigate("Listas")
+                    navController.navigate("Sesion")
 
 
 

@@ -90,6 +90,7 @@ fun LoginScreen(navController: NavHostController) {
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginPanel(navController: NavHostController) {
 
@@ -413,6 +414,7 @@ fun LoginScreenPreview() {
 private fun signIn(email: String, password: String) {
     var auth= FirebaseAuth.getInstance()
     auth.signInWithEmailAndPassword(email, password)
+
 }
 private fun createAccount(email: String, password: String) {
     var auth= FirebaseAuth.getInstance()
