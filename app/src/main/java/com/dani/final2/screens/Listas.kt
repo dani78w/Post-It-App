@@ -53,14 +53,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.dani.final2.R
 import com.dani.final2.appData.*
-import com.dani.final2.createAcount
+
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import android.content.ClipData
 import android.content.Context
+import android.content.ContextWrapper
 import android.widget.Toast
+import androidx.compose.material.icons.sharp.HideSource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -102,24 +104,24 @@ fun ListasScreen(navController: NavHostController) {
 @Composable
 
 fun Listas(navController: NavHostController) {
+
     var headerState by rememberSaveable() {
         mutableStateOf(250)
     }
     var ng = NoteGetter()
     var contexto = LocalContext.current
-        val db = Firebase.firestore
-        db.collection("notes").addSnapshotListener() { value, error ->
-            if (error != null) {
-                return@addSnapshotListener
-            }
-
-            noteList.clear()
-            textList.clear()
-            ng.getNotes()
-            ng.purgeDuplicates()
-
+    val db = Firebase.firestore
+    db.collection(session).addSnapshotListener() { value, error ->
+        if (error != null) {
+            return@addSnapshotListener
         }
 
+        noteList.clear()
+        textList.clear()
+        ng.getNotes()
+        ng.purgeDuplicates()
+
+    }
 
 
     var textInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
@@ -130,18 +132,19 @@ fun Listas(navController: NavHostController) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    Scaffold(modifier = Modifier.zIndex(1f),
+    Scaffold(
+        modifier = Modifier.zIndex(1f),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             Column(
-
+                modifier = Modifier.wrapContentHeight()
             ) {
 
 
                 BottomAppBar(
                     containerColor = Color.Transparent,
                     modifier = Modifier
-                        .height(90.dp)
+                        .wrapContentHeight()
                         .padding(7.dp)
                         .background(Color.Transparent, MaterialTheme.shapes.medium)
                 ) {
@@ -149,7 +152,7 @@ fun Listas(navController: NavHostController) {
                         value = textInput,
                         onValueChange = { textInput = it },
                         label = { Text(" Crear una nota") },
-                        maxLines = 1,
+
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Filled.StickyNote2,
@@ -159,7 +162,7 @@ fun Listas(navController: NavHostController) {
                         modifier = Modifier
                             .weight(0.5f)
                             .wrapContentHeight()
-                            .padding(start= 5.dp)
+                            .padding(start = 5.dp)
                             .background(
                                 MaterialTheme.colorScheme.surface,
                                 MaterialTheme.shapes.medium
@@ -187,26 +190,10 @@ fun Listas(navController: NavHostController) {
                             shape = MaterialTheme.shapes.large,
                             onClick = {
 
-                                val note = hashMapOf(
-                                    "email" to userName.value,
-                                    "note" to textInput.text,
-                                    "ubi" to lc.value,
-                                    "z" to lcd[0],
-                                    "x" to lcd[1],
-                                    "y" to lcd[2]
-                                )
-                                val db = Firebase.firestore
+                                ng.set(textInput.text)
 
-                                db.collection("notes").document().set(note)
-                                textList.add(textInput.text)
                                 textInput = TextFieldValue("")
                                 headerState = 0
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Nota agregada",
-                                        actionLabel = "Ok"
-                                    )
-                                }
 
 
                             }, modifier = Modifier
@@ -237,9 +224,15 @@ fun Listas(navController: NavHostController) {
                 }
 
                 var selectedItem by remember { mutableStateOf(1) }
-                val items = listOf("Inicio","Notas", "Mapa", "Cámara","Ajustes")
+                val items = listOf("Inicio", "Notas", "Mapa", "Cámara", "Ajustes")
                 val itemsIcon =
-                    listOf(Icons.Filled.Home,Icons.Filled.Notes, Icons.Filled.Map, Icons.Filled.Camera,Icons.Filled.Settings)
+                    listOf(
+                        Icons.Filled.Home,
+                        Icons.Filled.Notes,
+                        Icons.Filled.Map,
+                        Icons.Filled.Camera,
+                        Icons.Filled.Settings
+                    )
                 NavigationBar(modifier = Modifier.height(83.dp)) {
                     items.forEachIndexed { index, item ->
                         NavigationBarItem(
@@ -274,7 +267,7 @@ fun Listas(navController: NavHostController) {
         },
 
 
-    ) {
+        ) {
         // Screen content
 
 
@@ -342,7 +335,7 @@ fun Listas(navController: NavHostController) {
 
         }
         Column(
-            modifier=Modifier.padding(top=headerState.dp)
+            modifier = Modifier.padding(top = headerState.dp)
         ) {
 
 
@@ -396,201 +389,408 @@ fun Listas(navController: NavHostController) {
                             .padding(10.dp)
                     )
                 }
-                if(headerState==0){
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .clip(MaterialTheme.shapes.medium)
-
-                        .animateContentSize(
-                            animationSpec = tween(500)
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    var colapseButtonText by remember { mutableStateOf("Expand") }
-                    var colapseButtonIcon by remember { mutableStateOf(Icons.Outlined.Expand) }
+                if (headerState == 0) {
                     Row(
                         modifier = Modifier
-                            .weight(0.5f)
-                            .padding(10.dp, 5.dp, 5.dp, 10.dp)
+                            .fillMaxWidth()
+                            .wrapContentHeight()
                             .clip(MaterialTheme.shapes.medium)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.shapes.medium
-                            )
-                            .clickable(true) {
-                                if (listState.value) {
-                                    listState.value = false
-                                    colapseButtonText = "Colapse"
-                                    colapseButtonIcon = Icons.Outlined.Compress
-                                } else {
-                                    listState.value = true
-                                    colapseButtonText = "Expand"
-                                    colapseButtonIcon = Icons.Outlined.Expand
+
+                            .animateContentSize(
+                                animationSpec = tween(500)
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        var colapseButtonText by remember { mutableStateOf("Expand") }
+                        var colapseButtonIcon by remember { mutableStateOf(Icons.Outlined.Expand) }
+                        Row(
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .padding(10.dp, 5.dp, 5.dp, 10.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.shapes.medium
+                                )
+                                .clickable(true) {
+                                    if (listState.value) {
+                                        listState.value = false
+                                        colapseButtonText = "Colapse"
+                                        colapseButtonIcon = Icons.Outlined.Compress
+                                    } else {
+                                        listState.value = true
+                                        colapseButtonText = "Expand"
+                                        colapseButtonIcon = Icons.Outlined.Expand
+                                    }
+                                    val clipboardManager =
+                                        contexto.getSystemService(ClipboardManager::class.java)
+                                    clipboardManager?.setText(AnnotatedString("EEEpA"))
+
                                 }
-                                val clipboardManager = contexto.getSystemService(ClipboardManager::class.java)
-                                clipboardManager?.setText(AnnotatedString("EEEpA"))
-
-                            }
-                    ){
+                        ) {
 
 
-                        Text(
-                            text = colapseButtonText,
-                            modifier = Modifier
-                                .weight(0.6f)
-                                .padding(10.dp)
-                                .align(Alignment.CenterVertically)
-
-                        )
-                        Icon(
-                            imageVector = colapseButtonIcon,
-                            contentDescription = "da",
-                            modifier = Modifier
-                                .padding(10.dp)
-                                .weight(0.4f)
-                                .size(25.dp)
-                        )
-
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .weight(0.5f)
-                            .padding(5.dp, 5.dp, 10.dp, 10.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.shapes.medium
+                            Text(
+                                text = colapseButtonText,
+                                modifier = Modifier
+                                    .weight(0.6f)
+                                    .padding(10.dp)
+                                    .align(Alignment.CenterVertically)
 
                             )
-                            .clickable {
-                                var ng = NoteGetter()
-                                ng.deleteNotes()
-                                textList.clear()
-                                headerState = 250
-                            }
-                    ){
-                        Text(
-                            text = "Borrar todo",
-                            modifier = Modifier
-                                .weight(0.7f)
-                                .padding(10.dp)
-                                .align(Alignment.CenterVertically)
-                        )
-                        Icon(
-                            imageVector =  Icons.Sharp.Delete,
-                            contentDescription = "da",
-                            modifier = Modifier
-                                .padding(10.dp)
-                                .weight(0.3f)
-                                .size(25.dp)
+                            Icon(
+                                imageVector = colapseButtonIcon,
+                                contentDescription = "da",
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .weight(0.4f)
+                                    .size(25.dp)
+                            )
 
-                        )
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .padding(5.dp, 5.dp, 10.dp, 10.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.shapes.medium
+
+                                )
+                                .clickable {
+                                    var ng = NoteGetter()
+                                    ng.deleteNotes()
+                                    textList.clear()
+                                    headerState = 250
+                                }
+                        ) {
+                            Text(
+                                text = "Borrar todo",
+                                modifier = Modifier
+                                    .weight(0.7f)
+                                    .padding(10.dp)
+                                    .align(Alignment.CenterVertically)
+                            )
+                            Icon(
+                                imageVector = Icons.Sharp.Delete,
+                                contentDescription = "da",
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .weight(0.3f)
+                                    .size(25.dp)
+
+                            )
+
+                        }
+
 
                     }
-
-
-
-                }
                 }
 
                 Divider(
                     thickness = 1.dp,
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.padding(horizontal=175.dp,vertical=22.dp)
+                    modifier = Modifier.padding(horizontal = 175.dp, vertical = 22.dp)
                 )
 
                 //Si panel de notas detectado ocultar todo
 
 
-                 ng.showNotes(scope, snackbarHostState)
+                ng.showNotes(scope, snackbarHostState,navController)
 
-                /*Generador de notas puras sin gps
-                for (i in textList.distinct()) {
+                /*
+                if (!(noteList.isEmpty())) {
+                    var tamImage = remember {
+                        mutableStateOf(90.dp)
+                    }
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(10.dp)
+                            .height(240.dp)
                             .wrapContentHeight()
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.shapes.medium
-                            )
                             .animateContentSize(
                                 animationSpec = tween(500)
                             ),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Row(
+                        Icon(
+                            imageVector = Icons.Default.Storage,
+                            contentDescription = "",
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "NOTA",
-                                modifier = Modifier
-                                    .padding(start = 9.dp)
-                                    .align(Alignment.CenterVertically)
-                                    .weight(0.4f),
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.inverseSurface
-                            )
-                            Icon(imageVector = Icons.Default.AddLocation,
-                                contentDescription = "",
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .clickable {
+                                .size(100.dp)
+                                .align(Alignment.CenterHorizontally)
+                        )
+                        Text(
+                            textAlign = TextAlign.Center,
+                            text = "Notas locales",
+                            fontSize = 32.sp,
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                        Text(
+                            textAlign = TextAlign.Center,
+                            text = "SQLite",
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.inverseSurface
+                        )
 
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                withDismissAction = true,
-                                                message = "Aún no está implementado"
-                                            )
+                    }
+
+                    for (i in 0..noteList.size-1) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                                .padding(10.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                                .zIndex(2f)
+
+                                .animateContentSize(
+
+                                    animationSpec = tween(1000),
+                                )
+                        ) {
+                        Spacer(modifier = Modifier.height(150.dp).zIndex(0f))
+                            Image(
+                                painter = painterResource(id = R.drawable.texture),
+                                contentDescription = "Background",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .clip(MaterialTheme.shapes.small)
+                                    .zIndex(2f)
+                                    .height(tamImage.value)
+                                    .width(tamImage.value)
+                                    .align(Alignment.TopStart)
+                                    .clickable {
+                                        if (tamImage.value == 300.dp) {
+                                            tamImage.value = 90.dp
+                                        } else {
+                                            tamImage.value = 300.dp
                                         }
                                     }
-                                    .align(Alignment.CenterVertically),
-                                tint = MaterialTheme.colorScheme.inverseSurface
-                            )
-                            Icon(imageVector = Icons.Default.Delete,
-                                contentDescription = "",
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .clickable {
-                                        textList.remove(i)
-                                    }
-                                    .align(Alignment.CenterVertically),
-                                tint = MaterialTheme.colorScheme.inverseSurface
-                            )
-                        }
-                        Box(
-                            modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .animateContentSize(
 
-                        ) {
-                            Spacer(modifier = Modifier.height(200.dp))
-                            Column() {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(text = i, modifier = Modifier.padding(10.dp), fontSize = 20.sp)
-                                Spacer(modifier = Modifier.height(10.dp))
+                                        animationSpec = tween(1000),
+                                    )
+                                    .alpha(1f),
+                            )
+                            var icons = remember {
+                                mutableStateOf(Icons.Outlined.CheckBoxOutlineBlank)
                             }
 
+                            Icon(
+                                imageVector = icons.value,
+                                contentDescription = "",
+                                modifier = Modifier
+
+                                    .zIndex(3f)
+                                    .height(60.dp)
+                                    .width(60.dp)
+                                    .padding(bottom = 0.dp)
+                                    .padding(start = 20.dp)
+                                    .align(Alignment.BottomStart)
+                                    .clickable {
+                                        if (icons.value == Icons.Outlined.CheckBoxOutlineBlank) {
+                                            icons.value = Icons.Outlined.CheckBox
+                                        } else {
+                                            icons.value = Icons.Outlined.CheckBoxOutlineBlank
+                                        }
+                                    }
+                                    .animateContentSize(
+
+                                        animationSpec = tween(1000),
+                                    )
+                                    .alpha(1f),
+                            )
+                            Icon(
+                                imageVector = Icons.Filled.Square,
+                                contentDescription = "",
+                                modifier = Modifier
+
+                                    .zIndex(2f)
+                                    .height(60.dp)
+                                    .width(60.dp)
+                                    .padding(bottom = 0.dp)
+                                    .padding(start = 20.dp)
+                                    .align(Alignment.BottomStart)
+
+                                    .animateContentSize(
+
+                                        animationSpec = tween(1000),
+                                    )
+                                    .alpha(1f),
+                                    tint=Color(MaterialTheme.colorScheme.secondaryContainer.value)
+                            )
+
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .padding(vertical = 20.dp)
+                                    .padding(start = 40.dp)
+                                    .padding(bottom = 10.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .zIndex(1f)
+                                    .align(Alignment.BottomEnd)
+                                    .animateContentSize(
+                                        animationSpec = tween(1000),
+                                    )
+                            ) {
+                                Column() {
+                                    Row(
+                                        modifier = Modifier
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .fillMaxWidth()
+                                    ) {
+
+                                        Text(
+                                            text = "Nota", fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier
+                                                .padding(2.dp)
+                                                .padding(start = 55.dp)
+                                                .weight(0.4f),
+                                        )
+
+                                        Icon(imageVector = Icons.Sharp.HideSource,
+                                            contentDescription = "",
+                                            modifier = Modifier
+                                                .padding(4.dp)
+                                                .clickable {
+
+                                                }
+                                                .align(Alignment.CenterVertically),
+                                            tint = MaterialTheme.colorScheme.inverseSurface
+                                        )
+
+                                        Icon(imageVector = Icons.Default.AddLocation,
+                                            contentDescription = "",
+                                            modifier = Modifier
+                                                .padding(4.dp)
+
+                                                .align(Alignment.CenterVertically),
+                                            tint = MaterialTheme.colorScheme.inverseSurface
+                                        )
+
+                                        Icon(imageVector = Icons.Default.Delete,
+                                            contentDescription = "",
+                                            modifier = Modifier
+                                                .padding(4.dp)
+
+                                                .align(Alignment.CenterVertically),
+                                            tint = MaterialTheme.colorScheme.inverseSurface
+                                        )
+                                    }
+
+
+                                Text(
+                                        text= noteList[i].text,
+                                        modifier = Modifier
+                                            .padding(5.dp)
+                                            .padding(start = 64.dp)
+                                )
+                                }
+                            }
+
+
                         }
+
                     }
 
                 }
-                Spacer(modifier = Modifier.height(240.dp))
                 */
 
+                Spacer(modifier = Modifier.height(240.dp))
             }
-        }
-    }
 
+
+        }
+        /*Generador de notas puras sin gps
+            for (i in textList.distinct()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .wrapContentHeight()
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceVariant,
+                            MaterialTheme.shapes.medium
+                        )
+                        .animateContentSize(
+                            animationSpec = tween(500)
+                        ),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "NOTA",
+                            modifier = Modifier
+                                .padding(start = 9.dp)
+                                .align(Alignment.CenterVertically)
+                                .weight(0.4f),
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.inverseSurface
+                        )
+                        Icon(imageVector = Icons.Default.AddLocation,
+                            contentDescription = "",
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .clickable {
+
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            withDismissAction = true,
+                                            message = "Aún no está implementado"
+                                        )
+                                    }
+                                }
+                                .align(Alignment.CenterVertically),
+                            tint = MaterialTheme.colorScheme.inverseSurface
+                        )
+                        Icon(imageVector = Icons.Default.Delete,
+                            contentDescription = "",
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .clickable {
+                                    textList.remove(i)
+                                }
+                                .align(Alignment.CenterVertically),
+                            tint = MaterialTheme.colorScheme.inverseSurface
+                        )
+                    }
+                    Box(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+
+                    ) {
+                        Spacer(modifier = Modifier.height(200.dp))
+                        Column() {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(text = i, modifier = Modifier.padding(10.dp), fontSize = 20.sp)
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+
+                    }
+                }
+
+            }
+            Spacer(modifier = Modifier.height(240.dp))
+            */
+
+
+    }
 
 }
 

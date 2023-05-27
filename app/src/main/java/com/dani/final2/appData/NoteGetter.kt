@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.SupervisedUserCircle
 import androidx.compose.material.icons.outlined.ViewInAr
 import androidx.compose.material.icons.sharp.HideSource
 import androidx.compose.material3.Icon
@@ -17,12 +18,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.input.KeyboardType.Companion.Uri
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +33,8 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.core.net.UriCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
+import com.dani.final2.screens.ListEditScreen
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
@@ -37,9 +42,37 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.lang.Thread.sleep
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.ThreadFactory
 
 
 class NoteGetter() : ViewModel() {
+    fun obtenerFechaHoraActual(): String {
+        val calendario = Calendar.getInstance()
+        val formatoFechaHora = SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+        return formatoFechaHora.format(calendario.time)
+    }
+    fun set(textInput: String,x:Double=lcd[1],y:Double=lcd[2]) {
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val note = hashMapOf(
+                "note" to textInput,
+                "ubi" to lc.value,
+                "z" to lcd[0],
+                "x" to x,
+                "y" to y,
+                "userName" to userName.value,
+                "time" to obtenerFechaHoraActual()
+            )
+            val db = Firebase.firestore
+            //db.collection("notes").document().set(note)
+            var route = session
+            db.collection(session).document().set(note)
+            shortNotesByDate()
+        }
+
+    }
 
     fun location() {
 
@@ -53,12 +86,12 @@ class NoteGetter() : ViewModel() {
     }
 
     fun getNotes() {
-
+        var route = session
         sleep(25)
         val db = Firebase.firestore
         viewModelScope.launch(Dispatchers.IO) {
 
-            for (i in db.collection("notes").get().await().documents) {
+            for (i in db.collection(session).get().await().documents) {
                 if ((textList.contains(i.get("note").toString()))) {
                     continue
                 } else {
@@ -70,14 +103,15 @@ class NoteGetter() : ViewModel() {
                             i.get("ubi").toString(),
                             i.get("x").toString(),
                             i.get("y").toString(),
-                            i.get("z").toString()
+                            i.get("z").toString(),
+                            i.get("userName").toString()
                         )
                     )
                 }
 
 
             }
-
+            shortNotesByDate()
         }
         sleep(25)
     }
@@ -89,30 +123,29 @@ class NoteGetter() : ViewModel() {
     }
 
     fun deleteNotes() {
-        val db = Firebase.firestore
+        val route = session
         textList.clear()
         viewModelScope.launch(Dispatchers.IO) {
-            db.collection("notes").get().await().documents.forEach {
+            val db = Firebase.firestore
+            db.collection(route).get().await().documents.forEach {
                 it.reference.delete()
             }
         }
     }
 
     fun deleteNote(note: String) {
-        val db = Firebase.firestore
+        val route = session
         textList.clear()
+
         viewModelScope.launch(Dispatchers.IO) {
-            db.collection("notes").get().await().documents.forEach {
+            val db = Firebase.firestore
+            db.collection(route).get().await().documents.forEach {
                 if (it.get("note").toString() == note) {
                     it.reference.delete()
                 }
             }
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            db.collection("notes").get().await().documents.forEach {
-                it.reference.delete()
-            }
-        }
+
     }
 
     fun purgeDuplicates() {
@@ -140,9 +173,16 @@ class NoteGetter() : ViewModel() {
         noteList.addAll(auxList)
     }
 
+    fun shortNotesByDate() {
+        noteList.sortBy { it.time }
+    }
     @Composable
-    fun showNotes(scope: CoroutineScope, snackbarHostState: SnackbarHostState) {
-
+    fun showNotes(
+        scope: CoroutineScope,
+        snackbarHostState: SnackbarHostState,
+        navController: NavHostController
+    ) {
+        shortNotesByDate()
         val context = LocalContext.current
         if (!(noteList.isEmpty())) {
             Column(
@@ -181,10 +221,12 @@ class NoteGetter() : ViewModel() {
         }
         var j = 0
 
+        var y = 0
         for (i in noteList.distinct()) {
             waitToSincronize()
 
             if (listState.value) {
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -195,12 +237,17 @@ class NoteGetter() : ViewModel() {
                             MaterialTheme.colorScheme.surfaceVariant,
                             MaterialTheme.shapes.medium
                         )
+                        .clickable {
+                            noteSelected.value = y
+                            navController.navigate("ListEditScreen")
+                        }
                         .animateContentSize(
                             animationSpec = tween(500)
                         ),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    y = y + 1
                     if (!i.equals("N")) {
                         Row(
                             modifier = Modifier
@@ -244,7 +291,7 @@ class NoteGetter() : ViewModel() {
 
                                             val db = Firebase.firestore
                                             db
-                                                .collection("notes")
+                                                .collection(session)
                                                 .document(i.id)
                                                 .update(aux as Map<String, Any>)
                                         } else {
@@ -257,7 +304,7 @@ class NoteGetter() : ViewModel() {
                                             i.ubi = lc.value
                                             val db = Firebase.firestore
                                             db
-                                                .collection("notes")
+                                                .collection(session)
                                                 .document(i.id)
                                                 .update(aux as Map<String, Any>)
 
@@ -278,7 +325,7 @@ class NoteGetter() : ViewModel() {
 
                                         val db = Firebase.firestore
                                         db
-                                            .collection("notes")
+                                            .collection(session)
                                             .document(i.id)
                                             .delete()
                                     }
@@ -305,30 +352,33 @@ class NoteGetter() : ViewModel() {
                             )
                             Spacer(modifier = Modifier.height(5.dp))
 
-                            if (!(i.ubi.equals(""))) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
 
-                                        .height(30.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
 
-                                        .background(
-                                            MaterialTheme.colorScheme.secondaryContainer,
-                                            MaterialTheme.shapes.medium
+                                    .height(30.dp)
+
+                                    .background(
+                                        MaterialTheme.colorScheme.secondaryContainer,
+                                        MaterialTheme.shapes.medium
+                                    )
+                                    .clickable {
+
+                                        var intentToUri = Intent(
+                                            Intent.ACTION_VIEW,
+                                            android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=" + i.x + "," + i.y)
                                         )
-                                        .clickable {
+                                        intentToUri.setPackage("com.google.android.apps.maps")
+                                        startActivity(context, intentToUri, null)
+                                    }
+                                    .animateContentSize(
+                                        animationSpec = tween(500)
+                                    ),
 
-                                            var intentToUri = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=" + i.x+"," +i.y))
-                                            intentToUri.setPackage("com.google.android.apps.maps")
-                                            startActivity(context,intentToUri,null)
-                                        }
-                                        .animateContentSize(
-                                            animationSpec = tween(500)
-                                        ),
-
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (!(i.ubi.equals(""))) {
                                     Icon(
                                         imageVector = Icons.Outlined.ViewInAr,
                                         contentDescription = "da",
@@ -338,11 +388,30 @@ class NoteGetter() : ViewModel() {
                                             .size(15.dp)
                                     )
                                     Text(
-                                        text = "x: "+ i.x.substring(1,3)+" y: "+i.y.substring(1,3)+" z: "+i.z.substring(1,3),
+                                        text = "x: " + i.x.substring(1, 3) + " y: " + i.y.substring(
+                                            1,
+                                            3
+                                        ) + " z: " + i.z.substring(1, 3),
                                         modifier = Modifier
-                                            .weight(0.9f)
+                                            .weight(0.5f)
 
                                     )
+
+                                    Icon(
+                                        imageVector = Icons.Outlined.SupervisedUserCircle,
+                                        contentDescription = "da",
+                                        modifier = Modifier
+                                            .padding(2.dp)
+                                            .weight(0.1f)
+                                            .size(15.dp)
+                                    )
+                                    Text(
+                                        text= i.user,
+                                        modifier = Modifier
+                                            .weight(0.3f)
+
+                                    )
+
                                 }
                             }
                         }
@@ -389,7 +458,9 @@ class NoteGetter() : ViewModel() {
                                 modifier = Modifier
                                     .padding(4.dp)
                                     .clickable {
-                                        noteList.remove(i)
+                                        viewModelScope.launch {
+                                            noteList.remove(i)
+                                        }
                                     }
                                     .align(Alignment.CenterVertically),
                                 tint = MaterialTheme.colorScheme.inverseSurface
@@ -410,7 +481,7 @@ class NoteGetter() : ViewModel() {
 
                                             val db = Firebase.firestore
                                             db
-                                                .collection("notes")
+                                                .collection(session)
                                                 .document(i.id)
                                                 .update(aux as Map<String, Any>)
                                         } else {
@@ -423,7 +494,7 @@ class NoteGetter() : ViewModel() {
                                             i.ubi = lc.value
                                             val db = Firebase.firestore
                                             db
-                                                .collection("notes")
+                                                .collection(session)
                                                 .document(i.id)
                                                 .update(aux as Map<String, Any>)
 
@@ -444,7 +515,7 @@ class NoteGetter() : ViewModel() {
 
                                         val db = Firebase.firestore
                                         db
-                                            .collection("notes")
+                                            .collection(session)
                                             .document(i.id)
                                             .delete()
                                     }
@@ -509,8 +580,9 @@ class NoteGetter() : ViewModel() {
                 }
 
             }
+
         }
-        Spacer(modifier = Modifier.height(240.dp))
+
 
     }
 }

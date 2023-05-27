@@ -38,7 +38,6 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.dani.final2.R
 import com.dani.final2.appData.userName
-import com.dani.final2.createAcount
 
 @Composable
 fun CreateAcountScreen(navController: NavHostController) {

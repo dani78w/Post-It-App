@@ -56,7 +56,10 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:18.0.2'
     implementation 'com.google.maps.android:maps-compose-widgets:2.11.2'
     implementation 'com.google.maps.android:maps-compose-utils:2.11.2'
+    implementation 'com.google.firebase:firebase-storage-ktx:20.0.0'
 
+    implementation 'com.google.mlkit:barcode-scanning:17.1.0'
+    implementation 'com.google.android.material:material:1.5.0'
     implementation 'com.google.android.gms:play-services-auth:20.4.1'
     implementation 'com.google.android.gms:play-services-location:21.0.1'
     implementation platform('com.google.firebase:firebase-bom:31.3.0')

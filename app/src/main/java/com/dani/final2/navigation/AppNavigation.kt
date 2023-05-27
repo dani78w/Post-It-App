@@ -1,7 +1,6 @@
 package com.dani.final2.navigation
 
 
-
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,8 +11,8 @@ import com.dani.final2.screens.*
 fun AppNavigation() {
 
     var navController = rememberNavController()
-    var currentSong = 0
-    NavHost(navController = navController, startDestination = AppScreens.ListasScreen.route) {
+
+    NavHost(navController = navController, startDestination = AppScreens.HomeScreen.route ) {
         composable(AppScreens.LoginScreen.route) {
             LoginScreen(navController)
         }
@@ -31,6 +30,12 @@ fun AppNavigation() {
         }
         composable(AppScreens.MapasScreen.route) {
             MapasScreen(navController)
+        }
+        composable(AppScreens.SqlScreen.route) {
+            SqlScreen(navController)
+        }
+        composable(AppScreens.ListEditScreen.route) {
+            ListEditScreen(navController)
         }
 
     }

@@ -14,7 +14,8 @@ class Nota {
     var x :String="0.000000"
     var y :String="0.000000"
     var z :String="0.000000"
-
+    var user:String= userName.value
+    var time:String ="00:00:00"
 
     constructor(text: String, ubi: String) {
         this.text = text
@@ -28,6 +29,24 @@ class Nota {
         this.x = x
         this.y = y
         this.z = z
+    }
+
+    constructor(
+        id: String,
+        text: String,
+        ubi: String,
+        x: String,
+        y: String,
+        z: String,
+        user: String
+    ) {
+        this.id = id
+        this.text = text
+        this.ubi = ubi
+        this.x = x
+        this.y = y
+        this.z = z
+        this.user = user
     }
 
     fun setUbication(ubi:String){

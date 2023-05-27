@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.dani.final2.R
+import com.dani.final2.appData.SessionGetter
 import com.dani.final2.appData.userName
 import com.google.android.gms.common.api.GoogleApiActivity
 
@@ -37,6 +39,9 @@ import com.google.android.gms.common.api.GoogleApiActivity
 @Composable
 fun SessionMScreen(navController: NavHostController) {
     var idSession by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue())
+    }
+    var passwordSession by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
     }
     Box(
@@ -159,8 +164,8 @@ fun SessionMScreen(navController: NavHostController) {
                     )
                     Divider(thickness = 5.dp, color = Color.Transparent)
                     OutlinedTextField(
-                        value = idSession,
-                        onValueChange = { idSession = it },
+                        value = passwordSession,
+                        onValueChange = { passwordSession = it },
                         label = { Text("Contraseña") },
                         trailingIcon = {
                             Icon(
@@ -186,6 +191,7 @@ fun SessionMScreen(navController: NavHostController) {
                             unfocusedLabelColor = MaterialTheme.colorScheme.primary,
                         ),
                         maxLines = 1,
+                        visualTransformation = PasswordVisualTransformation(),
                         textStyle = TextStyle.Default.copy(
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 20.sp,
@@ -333,7 +339,8 @@ fun SessionMScreen(navController: NavHostController) {
 
                         Button(
                             onClick = {
-
+                                var sm = SessionGetter()
+                                sm.set(idSession.text,passwordSession.text)
                                 navController.navigate("Listas")
 
 
