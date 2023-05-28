@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
@@ -12,6 +13,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
+
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -23,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -33,17 +37,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.*
 
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.dani.final2.R
+import com.dani.final2.Start
+import com.dani.final2.animatewidth
 import com.dani.final2.appData.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -51,13 +55,11 @@ import com.google.firebase.storage.ktx.storage
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.lang.Thread.sleep
 import java.util.*
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
@@ -109,6 +111,15 @@ fun HomeScren(navController: NavHostController) {
 
         )
 
+        var totaltam by remember { mutableStateOf(0) }
+        var tam by remember { mutableStateOf(0) }
+
+        LaunchedEffect(Unit) {
+
+
+            totaltam =400
+            tam = 120
+        }
         Scaffold(
             bottomBar = {
                 Column(
@@ -174,44 +185,17 @@ fun HomeScren(navController: NavHostController) {
                     flingBehavior = ScrollableDefaults.flingBehavior(),
                 )
             ) {
-                Box(
-                    modifier = Modifier
-
-                        .height(600.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .fillMaxWidth()
-
-                ) {
-
-                    Image(
-                        painter = painterResource(id = R.drawable.favs),
-                        contentDescription = "Background",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(50.dp)
-                            .zIndex(2f)
-                            .align(Alignment.Center)
-                            .alpha(0.6f),
-                        colorFilter = ColorFilter.tint(
-                            MaterialTheme.colorScheme.primary,
-                            BlendMode.Modulate
-                        )
-                    )
-
-
-
-                }
 
                 Box(
                     modifier = Modifier
+
                         .height(350.dp)
                         .fillMaxWidth()
                         .animateContentSize(
                             animationSpec = tween(
-                                durationMillis = 500,
-                                delayMillis = 100
-                            )
+                                durationMillis = 1500,
+
+                                )
                         ),
 
                     ) {
@@ -235,12 +219,12 @@ fun HomeScren(navController: NavHostController) {
                             .align(Alignment.Center)
                             .fillMaxWidth()
                             .background(Color.Transparent)
-                            .padding(top = 30.dp),
+                            .padding(top = animatesize(velocity = 100.dp).value.dp),
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.mapafondotranslucido),
                             contentDescription = "Logo",
-
+                            alpha= animatealpha(velocity = 5.dp).value,
 
                             colorFilter = ColorFilter.tint(
                                 MaterialTheme.colorScheme.primary,
@@ -262,7 +246,7 @@ fun HomeScren(navController: NavHostController) {
                             painter = painterResource(id = R.drawable.session),
                             contentDescription = "Logo",
                             modifier = Modifier
-
+                                .rotate(animaterotation(velocity = 10.dp).value)
                                 .width(1030.dp),
                             colorFilter = ColorFilter.tint(
                                 MaterialTheme.colorScheme.inverseSurface,
@@ -300,6 +284,15 @@ fun HomeScren(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(30.dp))
 
+                Column(
+                    modifier= Modifier
+                        .height(totaltam.dp)
+                        .animateContentSize(
+                            animationSpec = tween(1500)
+                        ),
+                ){
+
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -326,12 +319,12 @@ fun HomeScren(navController: NavHostController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp)
-                        .height(120.dp)
-
+                        .height(tam.dp)
 
                         .animateContentSize(
-                            animationSpec = tween(500)
-                        ),
+                            animationSpec = tween(1500)
+                        )
+                    ,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
 
@@ -377,7 +370,9 @@ fun HomeScren(navController: NavHostController) {
 
                         .animateContentSize(
                             animationSpec = tween(500)
-                        ),
+                        )
+
+                    ,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
 
@@ -415,7 +410,7 @@ fun HomeScren(navController: NavHostController) {
                     }
 
                 }
-
+                }
                 Spacer(modifier = Modifier.height(140.dp))
 
 
@@ -424,5 +419,54 @@ fun HomeScren(navController: NavHostController) {
 
     }
 }
+@Composable
+fun animatesize(velocity: Dp): State<Float> {
+    val infiniteTransition = rememberInfiniteTransition()
 
+    val size = infiniteTransition.animateFloat(
+        initialValue = 0.dp.value,
+        targetValue = 40.dp.value,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 4000,
+                easing = CubicBezierEasing(0.42f, 0f, 0.58f, 0.7f)
+            ),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    return size
+}
+@Composable
+fun animatealpha(velocity: Dp): State<Float> {
+    val infiniteTransition = rememberInfiniteTransition()
+    val size = infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 100f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 4000,
+                easing = CubicBezierEasing(0.42f, 0f, 0.58f, 0.7f)
+            ),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    return size
+}
+@Composable
+fun animaterotation(velocity: Dp): State<Float> {
+    val infiniteTransition = rememberInfiniteTransition()
+
+    val size = infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 8900,
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+    return size
+}
 

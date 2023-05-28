@@ -8,17 +8,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.SupervisedUserCircle
 import androidx.compose.material.icons.outlined.ViewInAr
-import androidx.compose.material.icons.sharp.HideSource
+import androidx.compose.material.icons.sharp.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +39,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.lang.Thread.sleep
@@ -73,7 +74,15 @@ class NoteGetter() : ViewModel() {
         }
 
     }
-
+    fun delete(i:Nota){
+        viewModelScope.launch(Dispatchers.IO) {
+            val db = Firebase.firestore
+            db
+                .collection(session)
+                .document(i.id)
+                .delete()
+        }
+    }
     fun location() {
 
         val db = Firebase.firestore
@@ -86,6 +95,7 @@ class NoteGetter() : ViewModel() {
     }
 
     fun getNotes() {
+
         var route = session
         sleep(25)
         val db = Firebase.firestore
@@ -104,14 +114,15 @@ class NoteGetter() : ViewModel() {
                             i.get("x").toString(),
                             i.get("y").toString(),
                             i.get("z").toString(),
-                            i.get("userName").toString()
+                            i.get("userName").toString(),
+                            i.get("time").toString()
                         )
                     )
                 }
 
 
             }
-            shortNotesByDate()
+
         }
         sleep(25)
     }
@@ -222,10 +233,14 @@ class NoteGetter() : ViewModel() {
         var j = 0
 
         var y = 0
+        var tam by remember { mutableStateOf(0) }
+
         for (i in noteList.distinct()) {
             waitToSincronize()
 
             if (listState.value) {
+
+
 
                 Column(
                     modifier = Modifier
@@ -247,12 +262,17 @@ class NoteGetter() : ViewModel() {
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
+
+
                     y = y + 1
                     if (!i.equals("N")) {
+
                         Row(
                             modifier = Modifier
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .fillMaxWidth()
+
                         ) {
 
                             Text(
@@ -260,7 +280,24 @@ class NoteGetter() : ViewModel() {
                                 modifier = Modifier
                                     .padding(start = 9.dp)
                                     .align(Alignment.CenterVertically)
-                                    .weight(0.4f),
+                                    .weight(0.2f),
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.inverseSurface
+                            )
+                            Icon(imageVector = Icons.Sharp.Timer,
+                                contentDescription = "",
+                                modifier = Modifier
+                                    .size(15.dp)
+                                    .offset(y = 1.dp)
+                                    .align(Alignment.CenterVertically),
+                                tint = MaterialTheme.colorScheme.inverseSurface
+                            )
+                            Text(
+                                text = i.time.toString().substring(10,19),
+                                modifier = Modifier
+                                    .padding(start = 9.dp)
+                                    .align(Alignment.CenterVertically)
+                                    .weight(0.2f),
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.inverseSurface
                             )
@@ -315,7 +352,7 @@ class NoteGetter() : ViewModel() {
                                     .align(Alignment.CenterVertically),
                                 tint = MaterialTheme.colorScheme.inverseSurface
                             )
-
+                            LaunchedEffect(Unit) {}
                             Icon(imageVector = Icons.Default.Delete,
                                 contentDescription = "",
                                 modifier = Modifier
@@ -512,12 +549,8 @@ class NoteGetter() : ViewModel() {
                                     .padding(4.dp)
                                     .clickable {
                                         noteList.remove(i)
+                                        delete(i)
 
-                                        val db = Firebase.firestore
-                                        db
-                                            .collection(session)
-                                            .document(i.id)
-                                            .delete()
                                     }
                                     .align(Alignment.CenterVertically),
                                 tint = MaterialTheme.colorScheme.inverseSurface

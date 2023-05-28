@@ -12,7 +12,7 @@ fun AppNavigation() {
 
     var navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = AppScreens.HomeScreen.route ) {
+    NavHost(navController = navController, startDestination = AppScreens.ListasScreen.route ) {
         composable(AppScreens.LoginScreen.route) {
             LoginScreen(navController)
         }

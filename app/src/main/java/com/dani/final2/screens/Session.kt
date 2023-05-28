@@ -4,6 +4,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -14,14 +16,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.BaselineShift
@@ -35,9 +40,10 @@ import com.dani.final2.appData.SessionGetter
 import com.dani.final2.appData.userName
 import com.google.android.gms.common.api.GoogleApiActivity
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SessionMScreen(navController: NavHostController) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     var idSession by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
     }
@@ -129,7 +135,12 @@ fun SessionMScreen(navController: NavHostController) {
                     Spacer(modifier = Modifier.height(50.dp))
                     OutlinedTextField(
                         value = idSession,
-                        onValueChange = { idSession = it },
+                        onValueChange = {
+                                idSession = it
+                                if (idSession.text.length == 7) {
+                                    idSession = idSession.copy(text = idSession.text.dropLast(1))
+                                }
+                                        },
                         label = { Text("Id sesión") },
                         trailingIcon = {
                             Icon(
@@ -161,134 +172,43 @@ fun SessionMScreen(navController: NavHostController) {
                             textDecoration = null,
                             baselineShift = BaselineShift.None
                         )
-                    )
-                    Divider(thickness = 5.dp, color = Color.Transparent)
-                    OutlinedTextField(
-                        value = passwordSession,
-                        onValueChange = { passwordSession = it },
-                        label = { Text("Contraseña") },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.VpnKey,
-                                contentDescription = "siguiente"
-                            )
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .height(67.dp)
-                            .padding(horizontal = 10.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                MaterialTheme.shapes.medium
-                            )
-                            .fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary,
-                        ),
-                        maxLines = 1,
-                        visualTransformation = PasswordVisualTransformation(),
-                        textStyle = TextStyle.Default.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp,
-                            textDecoration = null,
-                            baselineShift = BaselineShift.None
+                        ,keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                keyboardController?.hide() // Quita el enfoque al presionar "Done"
+                                var sm = SessionGetter()
+                                if (idSession.text == ""){
+                                    sm.set("test","test")
+
+                                } else {
+                                    sm.set(idSession.text,passwordSession.text)
+                                }
+
+                                navController.navigate("HomeScreen")
+                            }
+
                         )
                     )
                     Divider(thickness = 5.dp, color = Color.Transparent)
 
+                    Divider(thickness = 5.dp, color = Color.Transparent)
+                    Spacer(modifier = Modifier.height(80.dp))
                     Row(
                         modifier = Modifier.padding(horizontal = 7.dp)
+                            .align(Alignment.CenterHorizontally)
                     ) {
-                        Row(
-                            modifier = Modifier
-
-                                .clickable(onClick = {
-                                    GoogleApiActivity().intent
-                                })
-                                .padding(horizontal = 2.dp)
-                                .height(47.dp)
-                                .fillMaxHeight()
-                                .weight(0.35f)
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                    MaterialTheme.shapes.medium
-                                )
-
-                        ) {
 
 
-                            Text(
-                                text = "  Crear",
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier
-                                    .weight(0.7f)
-                                    .align(Alignment.CenterVertically)
-                                    .padding(start = 10.dp),
-                                color = MaterialTheme.colorScheme.primary,
-                                style = TextStyle.Default.copy(
-                                    fontWeight = FontWeight.W700,
-                                    fontSize = 24.sp,
-                                    textDecoration = null,
-                                    baselineShift = BaselineShift.None
-                                )
-                            )
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = "siguiente",
-                                modifier = Modifier
-                                    .weight(0.4f)
-                                    .align(Alignment.CenterVertically)
-                                    .padding(start = 0.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-
-                        }
                         Column(
-                            verticalArrangement = Arrangement.Center,
-
-                            modifier = Modifier
-
-                                .clickable(onClick = {
-                                    GoogleApiActivity().intent
-                                })
-                                .padding(horizontal = 1.dp)
-                                .height(47.dp)
-                                .fillMaxHeight()
-                                .weight(0.12f)
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                    MaterialTheme.shapes.medium
-                                )
-
-                        ) {
-
-                            Icon(
-                                imageVector = Icons.Filled.HideSource,
-                                contentDescription = "siguiente",
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .width(25.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-
-                        }
-                        Row(
                             modifier = Modifier
 
                                 .clickable(onClick = {
                                     GoogleApiActivity().intent
                                 })
                                 .padding(horizontal = 2.dp)
-                                .height(47.dp)
-                                .fillMaxHeight()
+                                .width(80.dp)
+                                .height(80.dp)
 
-                                .weight(0.44f)
                                 .background(
                                     MaterialTheme.colorScheme.surfaceVariant,
                                     MaterialTheme.shapes.medium
@@ -304,29 +224,13 @@ fun SessionMScreen(navController: NavHostController) {
                         ) {
 
 
-                            Text(
-                                text = "  Escanear",
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier
-                                    .weight(0.7f)
-                                    .align(Alignment.CenterVertically)
-                                    .padding(start = 10.dp),
-                                color = MaterialTheme.colorScheme.primary,
-                                style = TextStyle.Default.copy(
-                                    fontWeight = FontWeight.W700,
-                                    fontSize = 24.sp,
-                                    textDecoration = null,
-                                    baselineShift = BaselineShift.None
-                                )
-                            )
                             Icon(
                                 imageVector = Icons.Filled.QrCode,
                                 contentDescription = "siguiente",
                                 modifier = Modifier
-                                    .weight(0.3f)
-                                    .align(Alignment.CenterVertically)
-                                    .padding(start = 0.dp),
+                                    .weight(0.8f)
+                                    .align(Alignment.CenterHorizontally)
+                                    .size(63.dp),
                                 tint = MaterialTheme.colorScheme.primary
                             )
 
@@ -340,8 +244,14 @@ fun SessionMScreen(navController: NavHostController) {
                         Button(
                             onClick = {
                                 var sm = SessionGetter()
-                                sm.set(idSession.text,passwordSession.text)
-                                navController.navigate("Listas")
+                                if (idSession.text=="") {
+                                    sm.set("test","test")
+
+                                }
+                                else {
+                                    sm.set(idSession.text,passwordSession.text)
+                                }
+                                navController.navigate("HomeScreen")
 
 
                             }, modifier = Modifier

@@ -49,6 +49,26 @@ class Nota {
         this.user = user
     }
 
+    constructor(
+        id: String,
+        text: String,
+        ubi: String,
+        x: String,
+        y: String,
+        z: String,
+        user: String,
+        time: String
+    ) {
+        this.id = id
+        this.text = text
+        this.ubi = ubi
+        this.x = x
+        this.y = y
+        this.z = z
+        this.user = user
+        this.time = time
+    }
+
     fun setUbication(ubi:String){
         this.ubi = ubi
         this.x = x

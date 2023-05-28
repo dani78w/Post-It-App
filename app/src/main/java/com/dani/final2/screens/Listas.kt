@@ -62,12 +62,18 @@ import android.content.ClipData
 import android.content.Context
 import android.content.ContextWrapper
 import android.widget.Toast
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.sharp.HideSource
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ListasScreen(navController: NavHostController) {
 
@@ -100,11 +106,11 @@ fun ListasScreen(navController: NavHostController) {
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "ServiceCast")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 
 fun Listas(navController: NavHostController) {
-
+    val keyboardController = LocalSoftwareKeyboardController.current
     var headerState by rememberSaveable() {
         mutableStateOf(250)
     }
@@ -182,6 +188,16 @@ fun Listas(navController: NavHostController) {
                             fontSize = 20.sp,
                             textDecoration = null,
                         )
+                        ,keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                keyboardController?.hide() // Quita el enfoque al presionar "Done"
+                                ng.set(textInput.text)
+                                textInput = TextFieldValue("")
+                                headerState = 0
+                            }
+
+                        )
                     )
 
                     if (textInput.text.isNotEmpty()) {
@@ -191,7 +207,6 @@ fun Listas(navController: NavHostController) {
                             onClick = {
 
                                 ng.set(textInput.text)
-
                                 textInput = TextFieldValue("")
                                 headerState = 0
 
@@ -283,8 +298,8 @@ fun Listas(navController: NavHostController) {
                     .height(headerState.dp)
                     .animateContentSize(
                         animationSpec = tween(
-                            durationMillis = 500,
-                            delayMillis = 100
+                            durationMillis = 1500,
+                            easing = FastOutSlowInEasing
                         )
                     ),
 
