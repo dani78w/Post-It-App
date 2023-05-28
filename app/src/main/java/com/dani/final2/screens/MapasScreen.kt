@@ -1,8 +1,6 @@
 package com.dani.final2.screens
 
-import android.content.Intent
-import android.hardware.Sensor
-import android.hardware.SensorManager
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -12,13 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,13 +24,10 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.dani.final2.R
 import com.dani.final2.appData.*
-import com.google.android.gms.maps.CameraUpdate
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
-import java.lang.reflect.InvocationTargetException
 
 @Composable
 fun MapasScreen(navController: NavHostController) {
@@ -70,7 +63,7 @@ fun Mapas(navController: NavHostController) {
         mutableStateOf(0)
     }
     var noteDistance= remember {
-        mutableStateOf(0.056)
+        mutableStateOf(NoteGetter().calculateDistance())
     }
 
 
@@ -294,14 +287,14 @@ fun Mapas(navController: NavHostController) {
 
 
                     var selectedItem by remember { mutableStateOf(2) }
-                    val items = listOf("Inicio", "Notas", "Mapa", "Cámara", "Ajustes")
+                    val items = listOf("Inicio", "Notas", "Mapa",  "Exportar","Premium")
                     val itemsIcon =
                         listOf(
-                            Icons.Filled.Home,
-                            Icons.Filled.Notes,
+                            Icons.Filled.Hexagon,
+                            Icons.Filled.StickyNote2,
                             Icons.Filled.Map,
-                            Icons.Filled.Camera,
-                            Icons.Filled.Settings,
+                            Icons.Filled.IosShare,
+                            Icons.Filled.Diamond
 
                         )
 
@@ -316,19 +309,24 @@ fun Mapas(navController: NavHostController) {
                                     selectedItem = index
                                     when (index) {
                                         0 -> {
+                                            selectedItem = 0
                                             navController.navigate("homeScreen")
                                         }
                                         1 -> {
-                                            navController.navigate("Listas")
+                                            selectedItem = 1
+                                            navController.navigate("listas")
                                         }
                                         2 -> {
+                                            selectedItem = 2
                                             navController.navigate("mapasScreen")
                                         }
                                         3 -> {
-                                            selectedItem = 4
+                                            selectedItem = 3
+                                            NoteGetter().shareNoteList(context)
                                         }
                                         4 -> {
                                             selectedItem = 4
+                                            navController.navigate("premiumScreen")
                                         }
                                     }
                                 }
@@ -465,5 +463,4 @@ fun Mapas(navController: NavHostController) {
 
         }
     }
-
 }

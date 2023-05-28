@@ -48,7 +48,6 @@ class LocalNoteGetter(context: Context):SQLiteOpenHelper(context, "notas", null,
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        // Define la estructura de tus tablas y crea las tablas aquí
         val createTableQuery = "CREATE TABLE IF NOT EXISTS " +
                 "notas (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT,x float,y float)"
         db.execSQL(createTableQuery)

@@ -1,65 +1,42 @@
 package com.dani.final2.screens
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
-import android.content.res.Configuration
-import android.net.Uri
-import androidx.compose.animation.ExperimentalAnimationApi
+
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.ScrollableDefaults
-import androidx.compose.foundation.gestures.scrollable
+
 import androidx.compose.foundation.layout.*
 
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.toUpperCase
-import androidx.compose.ui.tooling.preview.Preview
+
 import androidx.compose.ui.unit.*
 
 import androidx.compose.ui.zIndex
-import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.lifecycle.viewModelScope
+
 import androidx.navigation.NavHostController
 import com.dani.final2.R
-import com.dani.final2.Start
-import com.dani.final2.animatewidth
+
 import com.dani.final2.appData.*
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
+
 import kotlinx.coroutines.*
-import kotlinx.coroutines.tasks.await
-import java.io.File
-import java.io.IOException
-import java.lang.Thread.sleep
+
 import java.util.*
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
@@ -67,8 +44,8 @@ import java.util.*
 @Composable
 fun HomeScren(navController: NavHostController) {
 
-    if(userName.value.isEmpty()){
-        userName.value= "Anonimo"
+    if (userName.value.isEmpty()) {
+        userName.value = "Anonimo"
     }
     var context = LocalContext.current
 
@@ -76,9 +53,7 @@ fun HomeScren(navController: NavHostController) {
     var isLoading by remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
         val result = withContext(Dispatchers.IO) {
-            // Aquí puedes realizar cualquier tarea asíncrona, como una llamada de red
-            // o una consulta a una base de datos, etc.
-            // En este ejemplo, simulamos una tarea con delay.
+
             NoteGetter().getNotes()
             false
         }
@@ -113,12 +88,14 @@ fun HomeScren(navController: NavHostController) {
 
         var totaltam by remember { mutableStateOf(0) }
         var tam by remember { mutableStateOf(0) }
+        var tam2 by remember { mutableStateOf(0) }
 
         LaunchedEffect(Unit) {
 
 
-            totaltam =400
+            totaltam = 400
             tam = 120
+            tam2 = 40
         }
         Scaffold(
             bottomBar = {
@@ -135,14 +112,15 @@ fun HomeScren(navController: NavHostController) {
                     }
 
                     var selectedItem by remember { mutableStateOf(0) }
-                    val items = listOf("Inicio", "Notas", "Mapa", "Cámara", "Ajustes")
+                    val items = listOf("Inicio", "Notas", "Mapa",  "Exportar","Premium")
                     val itemsIcon =
                         listOf(
-                            Icons.Filled.Home,
-                            Icons.Filled.Notes,
+                            Icons.Filled.Hexagon,
+                            Icons.Filled.StickyNote2,
                             Icons.Filled.Map,
-                            Icons.Filled.Camera,
-                            Icons.Filled.Settings
+                            Icons.Filled.IosShare,
+                            Icons.Filled.Diamond
+
                         )
                     listOf(Icons.Filled.Notes, Icons.Filled.Map, Icons.Filled.Camera)
                     NavigationBar(modifier = Modifier.height(83.dp)) {
@@ -156,19 +134,24 @@ fun HomeScren(navController: NavHostController) {
                                     selectedItem = index
                                     when (index) {
                                         0 -> {
+                                            selectedItem = 0
                                             navController.navigate("homeScreen")
                                         }
                                         1 -> {
+                                            selectedItem = 1
                                             navController.navigate("listas")
                                         }
                                         2 -> {
+                                            selectedItem = 2
                                             navController.navigate("mapasScreen")
                                         }
                                         3 -> {
-                                            navController.navigate("qrScannerScreen")
+                                            selectedItem = 3
+                                            NoteGetter().shareNoteList(context)
                                         }
                                         4 -> {
                                             selectedItem = 4
+                                            navController.navigate("premiumScreen")
                                         }
                                     }
                                 }
@@ -200,20 +183,26 @@ fun HomeScren(navController: NavHostController) {
 
                     ) {
 
-                    Text(text = session.toUpperCase(), modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 52.dp)
-                        , style = TextStyle(
+                    Text(
+                        text = session.toUpperCase(),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 52.dp),
+                        style = TextStyle(
                             fontWeight = FontWeight.Bold,
                             fontSize = 75.sp
-                        ),)
-                    Text(text = "Sesión actual de tus notas", modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 48.dp)
-                        , style = TextStyle(
+                        ),
+                    )
+                    Text(
+                        text = "Sesión actual de tus notas",
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 48.dp),
+                        style = TextStyle(
                             fontWeight = FontWeight.Light,
                             fontSize = 15.sp
-                        ),)
+                        ),
+                    )
                     Column(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -224,7 +213,7 @@ fun HomeScren(navController: NavHostController) {
                         Image(
                             painter = painterResource(id = R.drawable.mapafondotranslucido),
                             contentDescription = "Logo",
-                            alpha= animatealpha(velocity = 5.dp).value,
+                            alpha = animatealpha(velocity = 5.dp).value,
 
                             colorFilter = ColorFilter.tint(
                                 MaterialTheme.colorScheme.primary,
@@ -285,133 +274,136 @@ fun HomeScren(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(30.dp))
 
                 Column(
-                    modifier= Modifier
+                    modifier = Modifier
                         .height(totaltam.dp)
                         .animateContentSize(
                             animationSpec = tween(1500)
                         ),
-                ){
-
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(45.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .animateContentSize(
-                            animationSpec = tween(500)
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Smartphone,
-                        contentDescription = "da",
+
+
+                    Row(
                         modifier = Modifier
-
-                            .weight(1f)
-                            .size(45.dp)
-
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .height(tam.dp)
-
-                        .animateContentSize(
-                            animationSpec = tween(1500)
-                        )
-                    ,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-
-                    Row(modifier = Modifier.weight(0.5f), horizontalArrangement = Arrangement.End) {
-                        Image(
-                            painter = painterResource(id = R.drawable.rightconnector),
-                            contentDescription = "Background",
-                            contentScale = ContentScale.Crop,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.surfaceVariant),
-                            modifier = Modifier
-
-                                .fillMaxHeight()
-                                .padding(end = 4.dp)
-
-
-                        )
-                    }
-                    Row(modifier = Modifier.weight(0.5f)) {
-                        Image(
-                            painter = painterResource(id = R.drawable.leftconnector),
-                            contentDescription = "Background",
-                            contentScale = ContentScale.Crop,
-                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.inverseSurface),
-
-                            modifier = Modifier
-
-                                .fillMaxHeight()
-                                .padding(start = 4.dp)
-
-
-                        )
-                    }
-
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-
-                        .wrapContentHeight()
-                        .clip(MaterialTheme.shapes.medium)
-
-                        .animateContentSize(
-                            animationSpec = tween(500)
-                        )
-
-                    ,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-
-                    Row(modifier = Modifier.weight(0.2f)) {
+                            .fillMaxWidth()
+                            .height(45.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .animateContentSize(
+                                animationSpec = tween(500)
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Icon(
-                            imageVector = Icons.Filled.Storage,
+                            imageVector = Icons.Outlined.Smartphone,
                             contentDescription = "da",
                             modifier = Modifier
-                                .padding(10.dp)
-                                .weight(0.4f)
-                                .size(35.dp)
-                        )
-                        Text(
-                            text = "SQLite",
-                            modifier = Modifier
-                                .weight(0.6f)
-                                .padding(top = 15.dp)
-                        )
-                    }
-                    Row(modifier = Modifier.weight(0.2f)) {
-                        Icon(
-                            imageVector = Icons.Filled.NetworkPing,
-                            contentDescription = "da",
-                            modifier = Modifier
-                                .padding(10.dp)
-                                .weight(0.4f)
-                                .size(35.dp)
-                        )
-                        Text(
-                            text = "FireBase",
-                            modifier = Modifier
-                                .weight(0.6f)
-                                .padding(top = 15.dp)
+
+                                .weight(1f)
+                                .size(45.dp)
+
                         )
                     }
 
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                            .height(tam.dp)
+
+                            .animateContentSize(
+                                animationSpec = tween(1500)
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+
+                        Row(
+                            modifier = Modifier.weight(0.5f),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.rightconnector),
+                                contentDescription = "Background",
+                                contentScale = ContentScale.Crop,
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.surfaceVariant),
+                                modifier = Modifier
+
+                                    .fillMaxHeight()
+                                    .padding(end = 4.dp)
+
+
+                            )
+                        }
+                        Row(modifier = Modifier.weight(0.5f)) {
+                            Image(
+                                painter = painterResource(id = R.drawable.leftconnector),
+                                contentDescription = "Background",
+                                contentScale = ContentScale.Crop,
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.inverseSurface),
+
+                                modifier = Modifier
+
+                                    .fillMaxHeight()
+                                    .padding(start = 4.dp)
+
+
+                            )
+                        }
+
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                            .wrapContentHeight()
+                            .clip(MaterialTheme.shapes.medium)
+
+                            .animateContentSize(
+                                animationSpec = tween(500)
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+
+                        Row(modifier = Modifier.weight(0.2f)) {
+                            Icon(
+                                imageVector = Icons.Filled.Storage,
+                                contentDescription = "da",
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .weight(0.4f)
+                                    .size(35.dp)
+                            )
+                            Text(
+                                text = "SQLite",
+                                modifier = Modifier
+                                    .weight(0.6f)
+                                    .padding(top = 15.dp)
+                            )
+                        }
+                        Row(modifier = Modifier.weight(0.2f)) {
+                            Icon(
+                                imageVector = Icons.Filled.NetworkPing,
+                                contentDescription = "da",
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .weight(0.4f)
+                                    .size(35.dp)
+                            )
+                            Text(
+                                text = "FireBase",
+                                modifier = Modifier
+                                    .weight(0.6f)
+                                    .padding(top = 15.dp)
+                            )
+                        }
+
+                    }
+
+
+
                 }
-                }
-                Spacer(modifier = Modifier.height(140.dp))
+
+
 
 
             }
@@ -419,6 +411,7 @@ fun HomeScren(navController: NavHostController) {
 
     }
 }
+
 @Composable
 fun animatesize(velocity: Dp): State<Float> {
     val infiniteTransition = rememberInfiniteTransition()
@@ -436,6 +429,7 @@ fun animatesize(velocity: Dp): State<Float> {
     )
     return size
 }
+
 @Composable
 fun animatealpha(velocity: Dp): State<Float> {
     val infiniteTransition = rememberInfiniteTransition()
@@ -452,6 +446,7 @@ fun animatealpha(velocity: Dp): State<Float> {
     )
     return size
 }
+
 @Composable
 fun animaterotation(velocity: Dp): State<Float> {
     val infiniteTransition = rememberInfiniteTransition()
@@ -469,4 +464,6 @@ fun animaterotation(velocity: Dp): State<Float> {
     )
     return size
 }
+
+
 

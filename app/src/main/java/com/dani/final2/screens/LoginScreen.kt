@@ -5,7 +5,10 @@ package com.dani.final2.screens
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Instrumentation
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -43,12 +46,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.dani.final2.R
-
-import com.dani.final2.appData.userName
-import com.dani.final2.appData.userPass
+import com.dani.final2.appData.*
 
 import com.dani.final2.navigation.AppNavigation
 import com.dani.final2.navigation.AppScreens
@@ -63,6 +66,8 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -93,7 +98,11 @@ fun LoginScreen(navController: NavHostController) {
 
 
         )
-        LoginPanel(navController)
+
+
+            LoginPanel(navController)
+
+
     }
 
 }
@@ -102,6 +111,12 @@ fun LoginScreen(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginPanel(navController: NavHostController) {
+
+    val context = LocalContext.current
+
+
+    //sharedPreferencesProcess().get(context,navController)
+
 
     var passwordInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
@@ -380,17 +395,19 @@ fun LoginPanel(navController: NavHostController) {
 
 
                 }
-                var context = LocalContext.current
+
                 Button(
                     onClick = {
 
+                        userEmail.value= userInput.text
+                        userPassword.value= passwordInput.text
 
-                        userName.value = userInput.text
+                        sharedPreferencesProcess().set(context,userName.value.toString())
 
                     try {
-                        createAcount(navController,userInput.text, passwordInput.text)
+                        Loginfunctions().createAcount(navController,userInput.text, passwordInput.text,context)
                     }catch (e:Exception) {
-                        singInAnonimously()
+                        Loginfunctions().singInAnonimously()
                         Toast.makeText(
                             context,
                             "Error al crear la cuenta , se iniciara sesion anonima",
@@ -425,56 +442,107 @@ fun LoginPanel(navController: NavHostController) {
 
 
 
+class Loginfunctions() : ViewModel() {
+     fun createAcount(navController: NavController,email: String, password: String ,context:Context):Boolean {
+        var output = false
+        val db = Firebase.firestore
+        var auth = FirebaseAuth.getInstance()
+        val user = hashMapOf(
+            "email" to email,
+            "password" to password,
+        )
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener() { task ->
+                if (task.isComplete) {
+                    print("Cuenta creada")
+                    output=!output
+                    userName.value=email.toString().split("@")[0]
+                    navController.navigate("CreateAcountScreen")
+                }
+                if(task.isCanceled){
+
+                    logIn(navController,email, password,context)
+                }
+            }
+        db.collection("users").document().set(user)
+        userPass.value=true
+        return output
+    }
+     fun logIn(navController: NavController,email: String, password: String,context:Context){
+        val auth = FirebaseAuth.getInstance()
+        userEmail.value=email
+         viewModelScope.launch(Dispatchers.IO) {
+             auth.signInWithEmailAndPassword(email, password)
+                 .addOnCompleteListener { task ->
+                     if (task.isComplete) {
+                         Log.d("Login", "Login exitoso")
+                         userName.value = email.toString().split("@")[0]
 
 
-private fun createAcount(navController: NavController,email: String, password: String):Boolean {
-    var output = false
-    val db = Firebase.firestore
-    var auth = FirebaseAuth.getInstance()
-    val user = hashMapOf(
-        "email" to email,
-        "password" to password,
-    )
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener() { task ->
-            if (task.isComplete) {
-                print("Cuenta creada")
-                output=!output
-                userName.value=email.toString().split("@")[0]
-                navController.navigate("CreateAcountScreen")
+
+
+
+
+                         navController.navigate("HomeScreen")
+                     }
+                     if (task.isCanceled) {
+                         throw Exception("Error al iniciar sesion")
+                     }
+                 }
+
+
+         }
+    }
+
+     fun singInAnonimously(){
+
+        var auth= FirebaseAuth.getInstance()
+        auth.signInAnonymously()
+            .addOnCompleteListener() { task ->
+                if (task.isSuccessful) {
+                    userName.value="Anonimo"
+                } else {
+                    print("Error al crear la cuenta")
+                }
             }
-            if(task.isCanceled){
-                logIn(navController,email, password)
-            }
-        }
-    db.collection("users").document().set(user)
-    userPass.value=true
-    return output
+    }
+
+
+
+
 }
-private fun logIn(navController: NavController,email: String, password: String){
-    val auth = FirebaseAuth.getInstance()
 
-    auth.signInWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isComplete) {
-                userName.value=email.toString().split("@")[0]
+class sharedPreferencesProcess():ViewModel() {
+
+
+    fun set(contexto: Context, nombre: String) {
+
+        val sharedPreferences = contexto.getSharedPreferences(
+            "sharedPrefs",
+            Context.MODE_PRIVATE
+        )
+        val editor = sharedPreferences.edit()
+        editor.putString("nombre", userName.value)
+        editor.apply()
+        editor.commit()
+
+    }
+
+    fun get(contexto: Context, navController: NavHostController) {
+        var nombre = ""
+        viewModelScope.launch {
+
+            val sharedPreferences = contexto.getSharedPreferences(
+                "sharedPrefs",
+                Context.MODE_PRIVATE
+            )
+            nombre = sharedPreferences.getString("nombre", "").toString()
+        }.invokeOnCompletion {
+            if (nombre != "") {
                 navController.navigate("HomeScreen")
             }
-            if (task.isCanceled) {
-                throw Exception("Error al iniciar sesion")
-            }
-        }
-}
 
-private fun singInAnonimously(){
 
-    var auth= FirebaseAuth.getInstance()
-    auth.signInAnonymously()
-        .addOnCompleteListener() { task ->
-            if (task.isSuccessful) {
-                userName.value="Anonimo"
-            } else {
-                print("Error al crear la cuenta")
-            }
         }
+    }
 }

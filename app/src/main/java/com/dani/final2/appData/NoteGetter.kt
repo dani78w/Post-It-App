@@ -2,6 +2,7 @@ package com.dani.final2.appData
 
 import android.content.Context
 import android.content.Intent
+import android.location.Location
 import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -81,6 +82,7 @@ class NoteGetter() : ViewModel() {
                 .collection(session)
                 .document(i.id)
                 .delete()
+            shortNotesByDate()
         }
     }
     fun location() {
@@ -101,7 +103,7 @@ class NoteGetter() : ViewModel() {
         val db = Firebase.firestore
         viewModelScope.launch(Dispatchers.IO) {
 
-            for (i in db.collection(session).get().await().documents) {
+            for (i in db.collection(session).get().await().documents.distinct()) {
                 if ((textList.contains(i.get("note").toString()))) {
                     continue
                 } else {
@@ -119,7 +121,7 @@ class NoteGetter() : ViewModel() {
                         )
                     )
                 }
-
+                shortNotesByDate()
 
             }
 
@@ -160,6 +162,7 @@ class NoteGetter() : ViewModel() {
     }
 
     fun purgeDuplicates() {
+
         var auxList = mutableListOf<Nota>()
         var flag = false
         for (i in noteList) {
@@ -183,7 +186,23 @@ class NoteGetter() : ViewModel() {
         noteList.clear()
         noteList.addAll(auxList)
     }
+    fun calculateDistance():Float{
+        var total = FloatArray(2)
+        for (i in 1..noteList.size - 1) {
+            if(i>0) {
+                var distance = FloatArray(2)
 
+                    distance[0]=noteList.get(i).x.toFloat()-noteList.get(i-1).x.toFloat()
+                    distance[1]=noteList.get(i).y.toFloat()-noteList.get(i-1).y.toFloat()
+
+                total += distance
+
+            }
+        }
+        var aux=total[0]*total[0]+total[1]*total[1]
+        aux = Math.sqrt(aux.toDouble()).toFloat()
+        return aux
+    }
     fun shortNotesByDate() {
         noteList.sortBy { it.time }
     }
@@ -231,11 +250,10 @@ class NoteGetter() : ViewModel() {
 
         }
         var j = 0
-
         var y = 0
         var tam by remember { mutableStateOf(0) }
 
-        for (i in noteList.distinct()) {
+        for (i in noteList.distinct().asReversed()) {
             waitToSincronize()
 
             if (listState.value) {
@@ -617,5 +635,34 @@ class NoteGetter() : ViewModel() {
         }
 
 
+    }
+    fun shareNoteList(context: Context){
+        var noteText = ""
+        var x = 0
+        for (i in 0 until noteList.distinct().size) {
+            x++
+            noteText=
+                noteText+
+                        "\n 🗒️ NOTA "+ x+
+                        "\n 📚 TEXTO: "+
+                        noteList[i].text+
+                        "\n"+
+                        " 📍 UBICACIÓN : https://www.google.com/maps/search/?api=1&query="+
+                        noteList[i].x +
+                        ","+
+                        noteList[i].y+
+                        " \n\n "
+        }
+        var intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "CÓDIGO DE SESIÓN : $session"+noteText
+
+            )
+        }
+        intent.resolveActivity(context.packageManager)?.let {
+            context.startActivity(intent)
+        }
     }
 }

@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationListenerCompat
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dani.final2.appData.*
 import com.dani.final2.navigation.AppNavigation
@@ -101,28 +102,34 @@ class MainActivity : ComponentActivity(), CoroutineScope by CoroutineScope(Dispa
     }
 
     fun cargarUbicacion(){
+
         var a = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         ActivityCompat.requestPermissions(this, a, 1000);
         ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
         var fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         CoroutineScope(Dispatchers.IO).launch {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    // Got last known location. In some rare situations this can be null.
-                    if (location != null) {
-                        lcd.add(location.altitude)
-                        lcd.add(location.latitude)
-                        lcd.add(location.longitude)
 
-                        lc.value = "Altura   : " + location.altitude.toString() + "\n" +
-                                "Latitud  : " + location.latitude.toString() + "\n" +
-                                "Longitud : " + location.longitude.toString()
-                        val nt = NoteGetter()
-                        nt.location()
-                    } else {
-                        lc.value = "No se pudo obtener la ubicacion"
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            lcd.add(location.altitude)
+                            lcd.add(location.latitude)
+                            lcd.add(location.longitude)
+
+                            lc.value = "Altura   : " + location.altitude.toString() + "\n" +
+                                    "Latitud  : " + location.latitude.toString() + "\n" +
+                                    "Longitud : " + location.longitude.toString()
+                            val nt = NoteGetter()
+                            nt.location()
+                        } else {
+                            lc.value = "No se pudo obtener la ubicacion"
+                        }
                     }
-                }
+
+
+
+
         }
     }
 

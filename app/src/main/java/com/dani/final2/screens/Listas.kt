@@ -2,23 +2,16 @@ package com.dani.final2.screens
 
 import android.annotation.SuppressLint
 
-import android.location.GpsSatellite
-import android.location.Location
-import android.telephony.CarrierConfigManager.Gps
-import android.view.MotionEvent
-import android.view.MotionEvent.actionToString
-import android.widget.EditText
-import androidx.compose.animation.AnimatedVisibility
+
+
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.Orientation
+
 import androidx.compose.foundation.gestures.ScrollableDefaults
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.scrollable
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,8 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
+
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -43,13 +35,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.core.content.ContextCompat.getSystemService
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+
 import androidx.navigation.NavHostController
 import com.dani.final2.R
 import com.dani.final2.appData.*
@@ -57,23 +47,19 @@ import com.dani.final2.appData.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
-import kotlinx.coroutines.tasks.await
-import android.content.ClipData
-import android.content.Context
-import android.content.ContextWrapper
-import android.widget.Toast
+
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.sharp.HideSource
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.platform.LocalContext
+
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
+import androidx.lifecycle.viewModelScope
 
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ListasScreen(navController: NavHostController) {
 
@@ -114,19 +100,21 @@ fun Listas(navController: NavHostController) {
     var headerState by rememberSaveable() {
         mutableStateOf(250)
     }
-    var ng = NoteGetter()
-    var contexto = LocalContext.current
+    val ng = NoteGetter()
+    val contexto = LocalContext.current
     val db = Firebase.firestore
-    db.collection(session).addSnapshotListener() { value, error ->
-        if (error != null) {
-            return@addSnapshotListener
+    LaunchedEffect(Unit) {
+        db.collection(session).addSnapshotListener() { value, error ->
+            if (error != null) {
+                return@addSnapshotListener
+            }
+
+            noteList.clear()
+            textList.clear()
+            ng.getNotes()
+            ng.purgeDuplicates()
+
         }
-
-        noteList.clear()
-        textList.clear()
-        ng.getNotes()
-        ng.purgeDuplicates()
-
     }
 
 
@@ -191,10 +179,11 @@ fun Listas(navController: NavHostController) {
                         ,keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
                             onDone = {
-                                keyboardController?.hide() // Quita el enfoque al presionar "Done"
                                 ng.set(textInput.text)
                                 textInput = TextFieldValue("")
                                 headerState = 0
+                                keyboardController?.hide() // Quita el enfoque al presionar "Done"
+
                             }
 
                         )
@@ -239,42 +228,50 @@ fun Listas(navController: NavHostController) {
                 }
 
                 var selectedItem by remember { mutableStateOf(1) }
-                val items = listOf("Inicio", "Notas", "Mapa", "Cámara", "Ajustes")
+                val items = listOf("Inicio", "Notas", "Mapa",  "Exportar","Premium")
                 val itemsIcon =
                     listOf(
-                        Icons.Filled.Home,
-                        Icons.Filled.Notes,
+                        Icons.Filled.Hexagon,
+                        Icons.Filled.StickyNote2,
                         Icons.Filled.Map,
-                        Icons.Filled.Camera,
-                        Icons.Filled.Settings
+                        Icons.Filled.IosShare,
+                        Icons.Filled.Diamond
+
                     )
                 NavigationBar(modifier = Modifier.height(83.dp)) {
                     items.forEachIndexed { index, item ->
                         NavigationBarItem(
-                            icon = { Icon(itemsIcon[index], contentDescription = item) },
+                            icon = { Icon(itemsIcon[index], contentDescription = item )},
                             label = { Text(item) },
                             selected = selectedItem == index,
+
                             onClick = {
                                 selectedItem = index
                                 when (index) {
                                     0 -> {
+                                        selectedItem = 0
                                         navController.navigate("homeScreen")
                                     }
                                     1 -> {
+                                        selectedItem = 1
                                         navController.navigate("listas")
                                     }
                                     2 -> {
+                                        selectedItem = 2
                                         navController.navigate("mapasScreen")
                                     }
                                     3 -> {
                                         selectedItem = 3
+                                        NoteGetter().shareNoteList(contexto)
                                     }
                                     4 -> {
                                         selectedItem = 4
+                                        navController.navigate("premiumScreen")
                                     }
                                 }
 
-                            }
+                            },
+
                         )
                     }
                 }
@@ -475,7 +472,7 @@ fun Listas(navController: NavHostController) {
 
                                 )
                                 .clickable {
-                                    var ng = NoteGetter()
+
                                     ng.deleteNotes()
                                     textList.clear()
                                     headerState = 250
